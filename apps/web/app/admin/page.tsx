@@ -471,63 +471,71 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Admin Header */}
-      <header className="bg-gray-900 text-white px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Shield className="text-red-400" size={28} />
-            <div>
-              <h1 className="text-xl font-bold">Administration FlipRadar</h1>
-              <p className="text-gray-400 text-sm">Panneau de controle systeme</p>
+      <header className="bg-gray-900 text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          {/* Logo & Title */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Shield className="text-red-400 flex-shrink-0" size={24} />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold truncate">Admin FlipRadar</h1>
+              <p className="text-gray-400 text-xs sm:text-sm hidden sm:block">Panneau de controle</p>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <LiveDot isLive={status?.database === "connected"} label="Systeme" />
+
+          {/* Actions Row */}
+          <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 overflow-x-auto">
+            {/* Live Status - Hidden on mobile */}
+            <div className="hidden sm:block">
+              <LiveDot isLive={status?.database === "connected"} label="Systeme" />
+            </div>
 
             {/* User info */}
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-sm flex-shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-600 flex items-center justify-center text-xs sm:text-sm">
                 {user?.email?.[0]?.toUpperCase() || "A"}
               </div>
-              <div className="hidden md:block">
-                <p className="font-medium">{user?.name || user?.email}</p>
+              <div className="hidden lg:block">
+                <p className="font-medium text-sm">{user?.name || user?.email}</p>
                 <p className="text-xs text-gray-400">{user?.plan}</p>
               </div>
             </div>
 
             <Link href="/dashboard">
-              <Button variant="outline" size="sm" className="text-white border-gray-600 hover:bg-gray-800">
-                Retour au dashboard
+              <Button variant="outline" size="sm" className="text-white border-gray-600 hover:bg-gray-800 text-xs sm:text-sm px-2 sm:px-3">
+                <span className="hidden sm:inline">Retour</span>
+                <span className="sm:hidden">Dashboard</span>
               </Button>
             </Link>
 
             <Button
               variant="outline"
               size="sm"
-              className="text-red-400 border-red-600 hover:bg-red-900"
+              className="text-red-400 border-red-600 hover:bg-red-900 text-xs sm:text-sm px-2 sm:px-3"
               onClick={handleLogout}
             >
-              <LogOut size={16} className="mr-2" />
-              Deconnexion
+              <LogOut size={14} className="sm:mr-1" />
+              <span className="hidden sm:inline">Deconnexion</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
         {/* System Status */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <Database size={20} className="text-green-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Database size={16} className="sm:hidden text-green-600" />
+                  <Database size={20} className="hidden sm:block text-green-600" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Base de donnees</p>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">Base de donnees</p>
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {getStatusIcon(status?.database || "error")}
-                    <span className={cn("font-medium", getStatusColor(status?.database || "error"))}>
-                      {status?.database === "connected" ? "Connectee" : "Erreur"}
+                    <span className={cn("font-medium text-xs sm:text-sm", getStatusColor(status?.database || "error"))}>
+                      {status?.database === "connected" ? "OK" : "Err"}
                     </span>
                   </div>
                 </div>
@@ -536,17 +544,18 @@ export default function AdminPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Activity size={20} className="text-blue-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <Activity size={16} className="sm:hidden text-blue-600" />
+                  <Activity size={20} className="hidden sm:block text-blue-600" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Scraping</p>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">Scraping</p>
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {getStatusIcon(isRunningScrap ? "running" : status?.scraping || "idle")}
-                    <span className={cn("font-medium", getStatusColor(isRunningScrap ? "running" : status?.scraping || "idle"))}>
-                      {isRunningScrap ? "En cours..." : status?.scraping === "running" ? "En cours" : "Pret"}
+                    <span className={cn("font-medium text-xs sm:text-sm truncate", getStatusColor(isRunningScrap ? "running" : status?.scraping || "idle"))}>
+                      {isRunningScrap ? "..." : status?.scraping === "running" ? "En cours" : "Pret"}
                     </span>
                   </div>
                 </div>
@@ -555,78 +564,81 @@ export default function AdminPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <BarChart3 size={20} className="text-purple-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <BarChart3 size={16} className="sm:hidden text-purple-600" />
+                  <BarChart3 size={20} className="hidden sm:block text-purple-600" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Deals</p>
-                  <p className="text-xl font-bold text-gray-900">{status?.total_deals || 0}</p>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">Deals</p>
+                  <p className="text-base sm:text-xl font-bold text-gray-900">{status?.total_deals || 0}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                  <Users size={20} className="text-orange-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <Users size={16} className="sm:hidden text-orange-600" />
+                  <Users size={20} className="hidden sm:block text-orange-600" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Utilisateurs</p>
-                  <p className="text-xl font-bold text-gray-900">{status?.total_users || 0}</p>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">Users</p>
+                  <p className="text-base sm:text-xl font-bold text-gray-900">{status?.total_users || 0}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Scraping Control */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <RefreshCw size={20} className="text-blue-500" />
-                  Controle du Scraping
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <RefreshCw size={18} className="text-blue-500" />
+                  Controle Scraping
                 </CardTitle>
                 <Button
                   onClick={() => handleRunScraping(selectedSources.length > 0 ? selectedSources : undefined)}
                   disabled={isRunningScrap}
-                  className="gap-2"
+                  className="gap-2 text-sm w-full sm:w-auto"
+                  size="sm"
                 >
                   {isRunningScrap ? (
                     <>
-                      <RefreshCw size={16} className="animate-spin" />
+                      <RefreshCw size={14} className="animate-spin" />
                       En cours...
                     </>
                   ) : (
                     <>
-                      <Play size={16} />
-                      Lancer le scan
+                      <Play size={14} />
+                      Lancer
                     </>
                   )}
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Scraping message feedback */}
                 {scrapingMessage && (
                   <div
                     className={cn(
-                      "p-3 rounded-lg text-sm font-medium",
+                      "p-2 sm:p-3 rounded-lg text-xs sm:text-sm font-medium",
                       scrapingMessage.type === "success"
                         ? "bg-green-100 text-green-800 border border-green-200"
                         : "bg-red-100 text-red-800 border border-red-200"
                     )}
                   >
                     {scrapingMessage.type === "success" ? (
-                      <CheckCircle size={16} className="inline mr-2" />
+                      <CheckCircle size={14} className="inline mr-1 sm:mr-2" />
                     ) : (
-                      <AlertTriangle size={16} className="inline mr-2" />
+                      <AlertTriangle size={14} className="inline mr-1 sm:mr-2" />
                     )}
                     {scrapingMessage.text}
                   </div>
@@ -710,13 +722,13 @@ export default function AdminPage() {
 
           {/* Webhook Configuration */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Webhook size={20} className="text-purple-500" />
-                Configuration Discord
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Webhook size={18} className="text-purple-500" />
+                Config Discord
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Webhook Discord Global
@@ -731,14 +743,14 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="flex gap-2">
-                <Button className="gap-2" disabled={!webhookUrl}>
-                  <Save size={16} />
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button className="gap-2 text-sm" size="sm" disabled={!webhookUrl}>
+                  <Save size={14} />
                   Enregistrer
                 </Button>
-                <Button variant="outline" className="gap-2" disabled={!webhookUrl}>
-                  <Globe size={16} />
-                  Tester le webhook
+                <Button variant="outline" className="gap-2 text-sm" size="sm" disabled={!webhookUrl}>
+                  <Globe size={14} />
+                  Tester
                 </Button>
               </div>
 
@@ -776,32 +788,32 @@ export default function AdminPage() {
 
         {/* Proxy Configuration */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Network size={20} className="text-cyan-500" />
-                Configuration Proxy
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Network size={18} className="text-cyan-500" />
+                Config Proxy
               </CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 {systemSettings?.use_rotating_proxy ? (
-                  <span className="flex items-center gap-1.5 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                    <Zap size={12} />
+                  <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                    <Zap size={10} />
                     Actif
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
-                    Desactive
+                  <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
+                    Off
                   </span>
                 )}
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">Mode Proxy Rotatif</p>
-                <p className="text-sm text-gray-500">
-                  Utiliser des proxies rotatifs pour eviter les blocages sur tous les scrapers (Vinted, Nike, Adidas, Zalando, etc.)
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg">
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">Mode Proxy Rotatif</p>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Proxies rotatifs pour eviter les blocages
                 </p>
               </div>
               <button
@@ -822,33 +834,35 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Proxies charges</p>
-                <p className="text-2xl font-bold text-gray-900">{systemSettings?.proxy_count || 0}</p>
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+              <div className="p-3 sm:p-4 bg-gray-50 rounded-lg">
+                <p className="text-xs sm:text-sm text-gray-500 mb-1">Proxies</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{systemSettings?.proxy_count || 0}</p>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Source</p>
-                <p className="text-sm font-medium text-gray-900">Webshare.io</p>
+              <div className="p-3 sm:p-4 bg-gray-50 rounded-lg">
+                <p className="text-xs sm:text-sm text-gray-500 mb-1">Source</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-900">Webshare.io</p>
               </div>
             </div>
 
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="gap-2"
+                size="sm"
+                className="gap-2 text-xs sm:text-sm"
                 onClick={handleReloadProxies}
                 disabled={isReloadingProxies || !systemSettings?.use_rotating_proxy}
               >
                 {isReloadingProxies ? (
                   <>
-                    <RefreshCw size={16} className="animate-spin" />
-                    Rechargement...
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span className="hidden sm:inline">Rechargement...</span>
                   </>
                 ) : (
                   <>
-                    <RefreshCw size={16} />
-                    Recharger les proxies
+                    <RefreshCw size={14} />
+                    <span className="hidden sm:inline">Recharger</span>
+                    <span className="sm:hidden">Reload</span>
                   </>
                 )}
               </Button>
@@ -880,25 +894,92 @@ export default function AdminPage() {
 
         {/* Sources Management */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Globe size={20} className="text-green-500" />
-                Gestion des Sources
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Globe size={18} className="text-green-500" />
+                Sources
               </CardTitle>
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                 <span className="text-gray-500">
-                  {sources?.filter(s => s.plan_required !== "pro").length || 0} sources FREE
+                  {sources?.filter(s => s.plan_required !== "pro").length || 0} FREE
                 </span>
                 <span className="flex items-center gap-1 text-amber-600 font-medium">
-                  <Crown size={14} />
-                  {sources?.filter(s => s.plan_required === "pro").length || 0} sources PRO
+                  <Crown size={12} />
+                  {sources?.filter(s => s.plan_required === "pro").length || 0} PRO
                 </span>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+            {/* Mobile: Cards view */}
+            <div className="sm:hidden space-y-3">
+              {sources?.map((source) => {
+                const sourceStatus = getSourceStatus(source);
+                const isPro = source.plan_required === "pro";
+                return (
+                  <div
+                    key={source.slug}
+                    className={cn(
+                      "p-3 rounded-lg border",
+                      isPro ? "border-amber-200 bg-amber-50/30" : "border-gray-200"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{source.name}</span>
+                        {isPro && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full">
+                            <Crown size={8} />
+                            PRO
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {getStatusIcon(sourceStatus)}
+                        <span className={cn("text-xs", getStatusColor(sourceStatus))}>
+                          {sourceStatus === "active" ? "Actif" : sourceStatus === "error" ? "Err" : "Off"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{source.total_deals_found} deals</span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => handleRunScraping([source.slug])}
+                          disabled={sourceStatus === "disabled" || isRunningScrap}
+                        >
+                          <Play size={12} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn("h-7 w-7 p-0", source.is_active ? "text-orange-500" : "text-green-500")}
+                          onClick={() => handleToggleSource(source)}
+                          disabled={updateSourceMutation.isPending}
+                        >
+                          {source.is_active ? <Pause size={12} /> : <Play size={12} />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-gray-400"
+                          onClick={() => handleOpenSourceSettings(source)}
+                        >
+                          <Settings size={12} />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop: Table view */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
@@ -998,16 +1079,17 @@ export default function AdminPage() {
 
         {/* Scraping Logs */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <FileText size={20} className="text-indigo-500" />
-                Journal de Scraping
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <FileText size={18} className="text-indigo-500" />
+                Journal
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-8 w-8 p-0"
                   onClick={() => refetchLogs()}
                   disabled={logsLoading}
                 >
@@ -1016,28 +1098,61 @@ export default function AdminPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                  className="text-orange-600 border-orange-300 hover:bg-orange-50 text-xs sm:text-sm"
                   onClick={() => handleDeleteOldLogs(7)}
                   disabled={isDeletingOldLogs}
                 >
                   {isDeletingOldLogs ? (
-                    <RefreshCw size={14} className="animate-spin mr-1" />
+                    <RefreshCw size={14} className="animate-spin sm:mr-1" />
                   ) : (
-                    <Trash2 size={14} className="mr-1" />
+                    <Trash2 size={14} className="sm:mr-1" />
                   )}
-                  Supprimer +7 jours
+                  <span className="hidden sm:inline">Supprimer +7j</span>
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
             {logsLoading && !logsData ? (
-              <div className="flex items-center justify-center py-8">
-                <RefreshCw size={24} className="animate-spin text-gray-400" />
+              <div className="flex items-center justify-center py-6 sm:py-8">
+                <RefreshCw size={20} className="animate-spin text-gray-400" />
               </div>
             ) : logsData?.logs && logsData.logs.length > 0 ? (
-              <div className="space-y-4">
-                <div className="overflow-x-auto">
+              <div className="space-y-3 sm:space-y-4">
+                {/* Mobile: Cards view */}
+                <div className="sm:hidden space-y-2">
+                  {logsData.logs.map((log) => (
+                    <div key={log.id} className="p-3 rounded-lg border border-gray-200 bg-white">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-gray-900">{log.source_name}</span>
+                          <span className={cn("px-1.5 py-0.5 rounded-full text-[10px] font-medium", getLogStatusColor(log.status))}>
+                            {log.status === "completed" ? "OK" : log.status === "failed" ? "Err" : "..."}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
+                          onClick={() => handleDeleteLog(log.id)}
+                          disabled={isDeletingLog === log.id}
+                        >
+                          {isDeletingLog === log.id ? <RefreshCw size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <span>{new Date(log.started_at).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                        <span>{formatDuration(log.duration_seconds)}</span>
+                        <span className="font-medium text-gray-700">{log.deals_found} deals</span>
+                        {log.deals_new > 0 && <span className="text-green-600 font-medium">+{log.deals_new}</span>}
+                        {log.proxy_used && <Network size={12} className="text-green-500" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: Table view */}
+                <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
@@ -1118,27 +1233,29 @@ export default function AdminPage() {
 
                 {/* Pagination */}
                 {logsData.total > logsData.page_size && (
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <span className="text-sm text-gray-500">
-                      Page {logsData.page} sur {Math.ceil(logsData.total / logsData.page_size)} ({logsData.total} logs)
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-3 sm:pt-4 border-t">
+                    <span className="text-xs sm:text-sm text-gray-500">
+                      Page {logsData.page}/{Math.ceil(logsData.total / logsData.page_size)}
                     </span>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
+                        className="text-xs sm:text-sm"
                         onClick={() => setLogsPage(logsPage - 1)}
                         disabled={logsPage <= 1}
                       >
                         <ChevronLeft size={14} />
-                        Precedent
+                        <span className="hidden sm:inline">Precedent</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
+                        className="text-xs sm:text-sm"
                         onClick={() => setLogsPage(logsPage + 1)}
                         disabled={logsPage >= Math.ceil(logsData.total / logsData.page_size)}
                       >
-                        Suivant
+                        <span className="hidden sm:inline">Suivant</span>
                         <ChevronRight size={14} />
                       </Button>
                     </div>
@@ -1146,10 +1263,9 @@ export default function AdminPage() {
                 )}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <FileText size={32} className="mx-auto mb-2 text-gray-300" />
-                <p>Aucun log de scraping pour le moment</p>
-                <p className="text-xs mt-1">Les logs apparaitront ici apres le premier scraping</p>
+              <div className="text-center py-6 sm:py-8 text-gray-500">
+                <FileText size={28} className="mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">Aucun log pour le moment</p>
               </div>
             )}
 
@@ -1172,22 +1288,22 @@ export default function AdminPage() {
 
         {/* Danger Zone */}
         <Card className="border-red-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle size={20} />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-red-600 text-base sm:text-lg">
+              <AlertTriangle size={18} />
               Zone Dangereuse
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
-              <div>
-                <p className="font-medium text-red-900">Purger les anciens deals</p>
-                <p className="text-sm text-red-600">
-                  Supprimer tous les deals de plus de 30 jours. Cette action est irreversible.
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-red-50 rounded-lg">
+              <div className="min-w-0">
+                <p className="font-medium text-red-900 text-sm sm:text-base">Purger les anciens deals</p>
+                <p className="text-xs sm:text-sm text-red-600">
+                  Supprimer deals +30 jours. Irreversible.
                 </p>
               </div>
-              <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-100">
-                <Trash2 size={16} className="mr-2" />
+              <Button variant="outline" size="sm" className="border-red-300 text-red-600 hover:bg-red-100 text-xs sm:text-sm w-full sm:w-auto flex-shrink-0">
+                <Trash2 size={14} className="mr-1 sm:mr-2" />
                 Purger
               </Button>
             </div>
