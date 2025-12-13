@@ -30,17 +30,14 @@ export default function Home() {
         {/* Header */}
         <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               <Image
                 src="/logo.png"
-                alt="Sharkted"
-                width={48}
-                height={48}
-                className="w-10 h-10 sm:w-12 sm:h-12"
+                alt="SharkTed"
+                width={180}
+                height={50}
+                className="h-10 sm:h-12 w-auto"
               />
-              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
-                Sharkted
-              </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <Link
@@ -390,10 +387,10 @@ export default function Home() {
         <footer className="border-t border-white/5">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <Image src="/logo.png" alt="Sharkted" width={32} height={32} />
+              <div className="flex items-center gap-4">
+                <Image src="/logo.png" alt="SharkTed" width={120} height={35} className="h-8 w-auto" />
                 <span className="font-semibold text-gray-400">
-                  2025 Sharkted. Tous droits reserves.
+                  2025 SharkTed. Tous droits reserves.
                 </span>
               </div>
               <div className="flex items-center gap-6 text-sm text-gray-500">
