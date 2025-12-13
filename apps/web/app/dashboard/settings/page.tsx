@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Bell, User, Shield, Info, TrendingUp, Clock, BarChart3, AlertTriangle } from "lucide-react";
+import { Save, Bell, User, Info, TrendingUp, Clock, BarChart3, AlertTriangle } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,10 +19,6 @@ export default function SettingsPage() {
   const [alertData, setAlertData] = useState({
     email_alerts: user?.email_alerts ?? true,
     alert_threshold: user?.alert_threshold || 70,
-  });
-
-  const [preferencesData, setPreferencesData] = useState({
-    risk_profile: user?.preferences?.risk_profile || "balanced",
   });
 
   const handleSaveProfile = async () => {
@@ -43,13 +39,6 @@ export default function SettingsPage() {
     }, 1000);
   };
 
-  const handleSavePreferences = async () => {
-    setSaving(true);
-    // TODO: Call API
-    setTimeout(() => {
-      setSaving(false);
-    }, 1000);
-  };
 
   return (
     <div>
@@ -237,106 +226,6 @@ export default function SettingsPage() {
             <Button onClick={handleSaveAlerts} disabled={saving}>
               <Save size={16} className="mr-2" />
               Enregistrer
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Preferences */}
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                <Shield className="text-green-600" size={20} />
-              </div>
-              <CardTitle>Profil de risque</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 mb-4">
-              SharkTed analyse automatiquement tous les produits et tailles disponibles grace a l'IA et aux donnees Vinted.
-              Vous restez libre de choisir ou non les deals proposes. Le profil de risque influence uniquement le type d'opportunites presentees.
-            </p>
-
-            <div className="space-y-3">
-              <label
-                className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  preferencesData.risk_profile === "conservative"
-                    ? "border-green-500 bg-green-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setPreferencesData({ risk_profile: "conservative" })}
-              >
-                <input
-                  type="radio"
-                  name="risk_profile"
-                  value="conservative"
-                  checked={preferencesData.risk_profile === "conservative"}
-                  onChange={() => setPreferencesData({ risk_profile: "conservative" })}
-                  className="mt-1"
-                />
-                <div>
-                  <p className="font-semibold text-gray-900">Conservateur</p>
-                  <p className="text-sm text-gray-500">
-                    Marge elevee (+30%), faible risque. Moins de deals mais plus surs.
-                    Ideal pour debuter ou limiter les risques.
-                  </p>
-                </div>
-              </label>
-
-              <label
-                className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  preferencesData.risk_profile === "balanced"
-                    ? "border-primary-500 bg-primary-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setPreferencesData({ risk_profile: "balanced" })}
-              >
-                <input
-                  type="radio"
-                  name="risk_profile"
-                  value="balanced"
-                  checked={preferencesData.risk_profile === "balanced"}
-                  onChange={() => setPreferencesData({ risk_profile: "balanced" })}
-                  className="mt-1"
-                />
-                <div>
-                  <p className="font-semibold text-gray-900">Equilibre <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full ml-2">Recommande</span></p>
-                  <p className="text-sm text-gray-500">
-                    Marge correcte (+20%), risque modere. Bon equilibre entre volume et securite.
-                    Adapte a la plupart des utilisateurs.
-                  </p>
-                </div>
-              </label>
-
-              <label
-                className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  preferencesData.risk_profile === "aggressive"
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setPreferencesData({ risk_profile: "aggressive" })}
-              >
-                <input
-                  type="radio"
-                  name="risk_profile"
-                  value="aggressive"
-                  checked={preferencesData.risk_profile === "aggressive"}
-                  onChange={() => setPreferencesData({ risk_profile: "aggressive" })}
-                  className="mt-1"
-                />
-                <div>
-                  <p className="font-semibold text-gray-900">Agressif</p>
-                  <p className="text-sm text-gray-500">
-                    Marge plus faible (+10%), plus de volume. Beaucoup de deals a traiter.
-                    Pour les utilisateurs experimentes avec du temps disponible.
-                  </p>
-                </div>
-              </label>
-            </div>
-
-            <Button onClick={handleSavePreferences} disabled={saving} className="mt-4">
-              <Save size={16} className="mr-2" />
-              Enregistrer le profil
             </Button>
           </CardContent>
         </Card>
