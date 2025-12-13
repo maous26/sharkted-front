@@ -1,0 +1,12 @@
+"""
+Sellshark API Routers
+"""
+
+from . import deals
+from . import users
+from . import alerts
+from . import analytics
+from . import scraping
+from . import ai
+
+__all__ = ["deals", "users", "alerts", "analytics", "scraping", "ai"]

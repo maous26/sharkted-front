@@ -1,0 +1,22 @@
+{
+  "name": "sellshark",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Le Bloomberg Terminal du resell mode en Europe",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "cd apps/api && python -m uvicorn main:app --reload --port 8000",
+    "dev:web": "cd apps/web && npm run dev",
+    "build:web": "cd apps/web && npm run build",
+    "db:migrate": "cd apps/api && alembic upgrade head",
+    "scrape": "cd apps/api && python -m scrapers.runner",
+    "worker": "cd apps/api && celery -A worker worker --loglevel=info"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

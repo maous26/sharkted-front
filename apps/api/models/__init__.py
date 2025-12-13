@@ -1,0 +1,36 @@
+"""Database models for Sellshark - Re-exported from database.py."""
+from database import (
+    Base,
+    Source,
+    Deal,
+    User,
+    VintedStats,
+    DealScore,
+    Outcome,
+    Alert,
+    PopularityReference,
+    ScrapingLog,
+    DealStatus,
+    ActionType,
+    RecommendedAction,
+    PlanType,
+    ScrapingLogStatus,
+)
+
+__all__ = [
+    "Base",
+    "Source",
+    "Deal",
+    "User",
+    "VintedStats",
+    "DealScore",
+    "Outcome",
+    "Alert",
+    "PopularityReference",
+    "ScrapingLog",
+    "DealStatus",
+    "ActionType",
+    "RecommendedAction",
+    "PlanType",
+    "ScrapingLogStatus",
+]
