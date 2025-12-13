@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -52,10 +52,16 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { logout, user } = useAuth();
 
-  // Check if user is admin based on plan (PRO/AGENCY have admin access)
-  const isAdmin = user?.plan?.toLowerCase() === "pro" || user?.plan?.toLowerCase() === "agency";
+  // Check if user is admin based on plan (PRO/AGENCY have admin access) or admin email
+  const isAdmin = user?.plan?.toLowerCase() === "pro" || user?.plan?.toLowerCase() === "agency" || user?.email === "admin@sharkted.fr";
+
+  const handleLogout = () => {
+    logout();
+    router.push("/auth/login");
+  };
 
   // Handle ESC key to close sidebar on mobile
   const handleKeyDown = useCallback(
@@ -172,7 +178,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="flex items-center gap-2 w-full px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
         >
           <LogOut size={18} />

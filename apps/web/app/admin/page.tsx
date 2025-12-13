@@ -112,7 +112,7 @@ export default function AdminPage() {
   const [isDeletingOldLogs, setIsDeletingOldLogs] = useState(false);
 
   // Check authentication and authorization
-  const isAdmin = user?.plan === "PRO" || user?.plan === "AGENCY" || user?.plan === "pro" || user?.plan === "agency";
+  const isAdmin = user?.plan === "PRO" || user?.plan === "AGENCY" || user?.plan === "pro" || user?.plan === "agency" || user?.email === "admin@sharkted.fr";
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURN
   // Fetch system status
