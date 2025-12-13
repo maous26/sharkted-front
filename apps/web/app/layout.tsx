@@ -6,7 +6,7 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FlipRadar - Find Profitable Deals",
+  title: "Sharkted - Find Profitable Deals",
   description: "The resell intelligence platform - Find profitable deals before everyone else",
 };
 

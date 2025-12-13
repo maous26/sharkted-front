@@ -7,7 +7,7 @@ export default function Home() {
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
         <nav className="flex items-center justify-between">
-          <div className="text-2xl font-bold text-primary-400">FlipRadar</div>
+          <div className="text-2xl font-bold text-primary-400">Sharkted</div>
           <div className="flex gap-4">
             <Link
               href="/auth/login"
@@ -33,7 +33,7 @@ export default function Home() {
             <span className="text-primary-400">avant tout le monde</span>
           </h1>
           <p className="text-xl text-gray-400 mb-8">
-            FlipRadar scanne les promos retail et calcule automatiquement ta
+            Sharkted scanne les promos retail et calcule automatiquement ta
             marge de revente sur Vinted. Fini les recherches manuelles, place
             aux deals intelligents.
           </p>
@@ -113,7 +113,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="container mx-auto px-4 py-8 mt-20 border-t border-gray-700">
         <div className="flex justify-between items-center text-gray-400">
-          <div>© 2024 FlipRadar. Tous droits réservés.</div>
+          <div>© 2024 Sharkted. Tous droits réservés.</div>
           <div className="flex gap-6">
             <Link href="#" className="hover:text-white transition">
               CGU

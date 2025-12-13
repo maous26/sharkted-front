@@ -39,7 +39,7 @@ export default function DashboardLayout({
         >
           <Menu size={24} />
         </button>
-        <span className="text-lg font-semibold">FlipRadar</span>
+        <span className="text-lg font-semibold">Sharkted</span>
       </div>
 
       {/* Main Content */}

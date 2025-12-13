@@ -43,7 +43,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-white">
             <TrendingUp className="text-primary-400" size={32} />
-            <span className="text-2xl font-bold">FlipRadar</span>
+            <span className="text-2xl font-bold">Sharkted</span>
           </Link>
           <p className="text-gray-400 mt-2">Créez votre compte gratuitement</p>
         </div>
