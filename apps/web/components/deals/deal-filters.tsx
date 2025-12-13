@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, Search, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface DealFiltersProps {
   onFiltersChange: (filters: Record<string, any>) => void;
@@ -51,6 +52,7 @@ const scorePresets = [
 
 export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     brand: "",
@@ -61,6 +63,25 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     sort_by: "detected_at",
     recommended_only: false,
   });
+
+  // Handle ESC key to close mobile drawer
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape" && isMobileDrawerOpen) {
+      setIsMobileDrawerOpen(false);
+    }
+  }, [isMobileDrawerOpen]);
+
+  // Body scroll lock when mobile drawer is open
+  useEffect(() => {
+    if (isMobileDrawerOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [isMobileDrawerOpen, handleKeyDown]);
 
   // Debounced search
   useEffect(() => {
@@ -122,41 +143,153 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     searchQuery,
   ].filter(Boolean).length;
 
+  // Filter panel content (reused in desktop expand and mobile drawer)
+  const filterPanelContent = (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {/* Brand Filter */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Marque
+          </label>
+          <select
+            value={filters.brand}
+            onChange={(e) => handleChange("brand", e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            {brands.map((brand) => (
+              <option key={brand.value} value={brand.value}>
+                {brand.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Category Filter */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Categorie
+          </label>
+          <select
+            value={filters.category}
+            onChange={(e) => handleChange("category", e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            {categories.map((cat) => (
+              <option key={cat.value} value={cat.value}>
+                {cat.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Min Score */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Score minimum
+          </label>
+          <div className="flex gap-2">
+            {scorePresets.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => handleChange("min_score", preset.value)}
+                className={cn(
+                  "flex-1 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors",
+                  filters.min_score === preset.value
+                    ? "bg-primary-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Min Margin */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Marge minimum
+          </label>
+          <div className="flex gap-2">
+            {marginPresets.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => handleChange("min_margin", preset.value)}
+                className={cn(
+                  "flex-1 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors",
+                  filters.min_margin === preset.value
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Price Range */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Prix maximum
+        </label>
+        <div className="flex items-center gap-4">
+          <input
+            type="range"
+            min="0"
+            max="500"
+            step="10"
+            value={filters.max_price || 500}
+            onChange={(e) =>
+              handleChange("max_price", e.target.value === "500" ? "" : e.target.value)
+            }
+            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
+          />
+          <span className="text-sm font-medium text-gray-700 w-20 text-right">
+            {filters.max_price ? `${filters.max_price} EUR` : "Illimite"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {/* Main Filter Bar */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         {/* Search Input */}
         <div className="relative flex-1">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            size={20}
+            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
           />
           <input
             type="text"
-            placeholder="Rechercher un produit, une marque..."
+            placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white text-gray-900 border border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow"
+            className="w-full bg-white text-gray-900 border border-gray-200 rounded-xl pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X size={18} />
             </button>
           )}
         </div>
 
-        {/* Quick Filters */}
-        <div className="flex items-center gap-2 flex-wrap lg:flex-nowrap">
+        {/* Quick Filters Row */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 sm:flex-nowrap">
           {/* Sort Dropdown */}
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <select
               value={filters.sort_by}
               onChange={(e) => handleChange("sort_by", e.target.value)}
-              className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
+              className="appearance-none bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 pr-8 sm:pr-10 text-xs sm:text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -165,39 +298,47 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
               ))}
             </select>
             <ChevronDown
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              size={18}
+              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              size={16}
             />
           </div>
 
-          {/* Buy Only Toggle */}
+          {/* Buy Only Toggle - Hidden text on mobile */}
           <button
             onClick={() => handleChange("recommended_only", !filters.recommended_only)}
             className={cn(
-              "flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all",
+              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex-shrink-0 whitespace-nowrap",
               filters.recommended_only
                 ? "bg-green-500 border-green-500 text-white"
                 : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
             )}
           >
-            {filters.recommended_only && <Check size={16} />}
-            Acheter uniquement
+            {filters.recommended_only && <Check size={14} />}
+            <span className="hidden sm:inline">Acheter uniquement</span>
+            <span className="sm:hidden">Acheter</span>
           </button>
 
-          {/* More Filters Toggle */}
+          {/* More Filters Toggle - Opens drawer on mobile */}
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => {
+              if (window.innerWidth < 640) {
+                setIsMobileDrawerOpen(true);
+              } else {
+                setIsExpanded(!isExpanded);
+              }
+            }}
             className={cn(
-              "flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all",
-              isExpanded || activeFiltersCount > 0
+              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex-shrink-0",
+              (isExpanded || isMobileDrawerOpen || activeFiltersCount > 0)
                 ? "bg-primary-500 border-primary-500 text-white"
                 : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
             )}
+            aria-expanded={isExpanded || isMobileDrawerOpen}
           >
-            <SlidersHorizontal size={18} />
-            Filtres
+            <SlidersHorizontal size={16} />
+            <span className="hidden sm:inline">Filtres</span>
             {activeFiltersCount > 0 && (
-              <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
+              <span className="bg-white/20 px-1.5 sm:px-2 py-0.5 rounded-full text-xs">
                 {activeFiltersCount}
               </span>
             )}
@@ -205,166 +346,118 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
         </div>
       </div>
 
+      {/* Mobile Filter Drawer */}
+      {isMobileDrawerOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            className="sm:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setIsMobileDrawerOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Drawer */}
+          <div
+            className="sm:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[85vh] overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filtres"
+          >
+            {/* Drawer Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
+              <button
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                aria-label="Fermer les filtres"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Drawer Content */}
+            <div className="p-4">
+              {filterPanelContent}
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  resetFilters();
+                  setIsMobileDrawerOpen(false);
+                }}
+              >
+                Réinitialiser
+              </Button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                onClick={() => setIsMobileDrawerOpen(false)}
+              >
+                Appliquer
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Active Filters Chips */}
       {activeFiltersCount > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-500">Filtres actifs:</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <span className="text-xs sm:text-sm text-gray-500 hidden sm:inline">Filtres actifs:</span>
 
           {filters.brand && (
             <FilterChip
-              label={`Marque: ${filters.brand}`}
+              label={filters.brand}
               onRemove={() => handleChange("brand", "")}
             />
           )}
           {filters.category && (
             <FilterChip
-              label={`Categorie: ${categories.find(c => c.value === filters.category)?.label}`}
+              label={categories.find(c => c.value === filters.category)?.label || filters.category}
               onRemove={() => handleChange("category", "")}
             />
           )}
           {filters.min_score > 0 && (
             <FilterChip
-              label={`Score > ${filters.min_score}`}
+              label={`>${filters.min_score}`}
               onRemove={() => handleChange("min_score", 0)}
             />
           )}
           {filters.min_margin > 0 && (
             <FilterChip
-              label={`Marge > ${filters.min_margin}%`}
+              label={`>${filters.min_margin}%`}
               onRemove={() => handleChange("min_margin", 0)}
             />
           )}
           {filters.max_price && (
             <FilterChip
-              label={`Prix max: ${filters.max_price}EUR`}
+              label={`<${filters.max_price}€`}
               onRemove={() => handleChange("max_price", "")}
             />
           )}
           {searchQuery && (
             <FilterChip
-              label={`"${searchQuery}"`}
+              label={searchQuery.length > 10 ? searchQuery.slice(0, 10) + "..." : searchQuery}
               onRemove={() => setSearchQuery("")}
             />
           )}
 
           <button
             onClick={resetFilters}
-            className="text-sm text-red-500 hover:text-red-600 font-medium ml-2"
+            className="text-xs sm:text-sm text-red-500 hover:text-red-600 font-medium ml-1 sm:ml-2"
           >
-            Tout effacer
+            Effacer
           </button>
         </div>
       )}
 
-      {/* Expanded Filters Panel */}
+      {/* Desktop Expanded Filters Panel - Hidden on mobile */}
       {isExpanded && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Brand Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Marque
-              </label>
-              <select
-                value={filters.brand}
-                onChange={(e) => handleChange("brand", e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                {brands.map((brand) => (
-                  <option key={brand.value} value={brand.value}>
-                    {brand.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Categorie
-              </label>
-              <select
-                value={filters.category}
-                onChange={(e) => handleChange("category", e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                {categories.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Min Score */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Score minimum
-              </label>
-              <div className="flex gap-2">
-                {scorePresets.map((preset) => (
-                  <button
-                    key={preset.value}
-                    onClick={() => handleChange("min_score", preset.value)}
-                    className={cn(
-                      "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors",
-                      filters.min_score === preset.value
-                        ? "bg-primary-500 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    )}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Min Margin */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Marge minimum
-              </label>
-              <div className="flex gap-2">
-                {marginPresets.map((preset) => (
-                  <button
-                    key={preset.value}
-                    onClick={() => handleChange("min_margin", preset.value)}
-                    className={cn(
-                      "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors",
-                      filters.min_margin === preset.value
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    )}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Price Range */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Prix maximum
-            </label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="500"
-                step="10"
-                value={filters.max_price || 500}
-                onChange={(e) =>
-                  handleChange("max_price", e.target.value === "500" ? "" : e.target.value)
-                }
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
-              />
-              <span className="text-sm font-medium text-gray-700 w-20 text-right">
-                {filters.max_price ? `${filters.max_price} EUR` : "Illimite"}
-              </span>
-            </div>
-          </div>
+        <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
+          {filterPanelContent}
         </div>
       )}
 
@@ -387,13 +480,14 @@ function FilterChip({
   onRemove: () => void;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
+    <span className="inline-flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-0.5 sm:py-1 bg-primary-100 text-primary-700 rounded-full text-xs sm:text-sm font-medium">
       {label}
       <button
         onClick={onRemove}
         className="hover:bg-primary-200 rounded-full p-0.5 transition-colors"
+        aria-label={`Supprimer le filtre ${label}`}
       >
-        <X size={14} />
+        <X size={12} className="sm:w-3.5 sm:h-3.5" />
       </button>
     </span>
   );
