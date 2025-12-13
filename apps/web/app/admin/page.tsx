@@ -1107,7 +1107,21 @@ export default function AdminPage() {
                   ) : (
                     <Trash2 size={14} className="sm:mr-1" />
                   )}
-                  <span className="hidden sm:inline">Supprimer +7j</span>
+                  <span className="hidden sm:inline">+7 jours</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-300 hover:bg-red-50 text-xs sm:text-sm"
+                  onClick={() => {
+                    if (confirm("Supprimer TOUS les logs ? Cette action est irreversible.")) {
+                      handleDeleteOldLogs(0);
+                    }
+                  }}
+                  disabled={isDeletingOldLogs}
+                >
+                  <Trash2 size={14} className="sm:mr-1" />
+                  <span className="hidden sm:inline">Tout purger</span>
                 </Button>
               </div>
             </div>
