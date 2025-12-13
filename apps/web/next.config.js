@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: "standalone",
   images: {
     remotePatterns: [
       {
@@ -18,6 +19,34 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "**.vinted.net",
+      },
+      {
+        protocol: "https",
+        hostname: "**.courir.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.footlocker.fr",
+      },
+      {
+        protocol: "https",
+        hostname: "**.footlocker.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.footlocker.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.jdsports.fr",
+      },
+      {
+        protocol: "https",
+        hostname: "**.size.co.uk",
+      },
+      {
+        protocol: "https",
+        hostname: "i8.amplience.net",
       },
     ],
   },

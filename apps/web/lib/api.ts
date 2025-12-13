@@ -128,12 +128,18 @@ export const scrapingApi = {
 export const analyticsApi = {
   dashboard: () => api.get("/v1/deals/stats"),
 
-  brands: () => api.get("/v1/deals/stats/brands"),
+  brands: (limit?: number) => api.get("/v1/deals/stats/brands", { params: { limit } }),
 
   categories: () => api.get("/v1/deals/stats/categories"),
 
   trends: (params?: { days?: number }) =>
     api.get("/v1/deals/stats/trends", { params }),
+
+  dealsTrend: (days?: number) => api.get("/v1/deals/stats/trends", { params: { days } }),
+
+  scoreDistribution: () => api.get("/v1/deals/stats/score-distribution"),
+
+  sourcePerformance: () => api.get("/v1/deals/stats/sources"),
 };
 
 // ============================================================================
@@ -148,6 +154,8 @@ export const alertsApi = {
   markAllRead: () => api.patch("/v1/alerts/read-all"),
 
   getUnreadCount: () => api.get("/v1/alerts/unread-count"),
+
+  stats: (days?: number) => api.get("/v1/alerts/stats", { params: { days } }),
 };
 
 // ============================================================================

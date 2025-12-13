@@ -94,7 +94,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       <div className="p-6 border-b border-gray-800 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2">
           <TrendingUp className="text-primary-400" size={28} />
-          <span className="text-xl font-bold">FlipRadar</span>
+          <span className="text-xl font-bold">Sharkted</span>
         </Link>
         {/* Close button - only visible on mobile */}
         {onClose && (

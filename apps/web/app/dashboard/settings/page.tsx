@@ -13,7 +13,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   const [profileData, setProfileData] = useState({
-    name: user?.name || "",
+    name: user?.full_name || user?.username || "",
   });
 
   const [alertData, setAlertData] = useState({
@@ -32,7 +32,7 @@ export default function SettingsPage() {
     setSaving(true);
     // TODO: Call API
     setTimeout(() => {
-      updateUser(profileData);
+      updateUser({ full_name: profileData.name });
       setSaving(false);
     }, 1000);
   };
@@ -289,7 +289,7 @@ export default function SettingsPage() {
               <select
                 value={preferencesData.risk_profile}
                 onChange={(e) =>
-                  setPreferencesData({ ...preferencesData, risk_profile: e.target.value })
+                  setPreferencesData({ ...preferencesData, risk_profile: e.target.value as "conservative" | "balanced" | "aggressive" })
                 }
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
               >

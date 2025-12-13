@@ -477,7 +477,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3 sm:gap-4">
             <Shield className="text-red-400 flex-shrink-0" size={24} />
             <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold truncate">Admin FlipRadar</h1>
+              <h1 className="text-lg sm:text-xl font-bold truncate">Admin Sharkted</h1>
               <p className="text-gray-400 text-xs sm:text-sm hidden sm:block">Panneau de controle</p>
             </div>
           </div>
@@ -495,7 +495,7 @@ export default function AdminPage() {
                 {user?.email?.[0]?.toUpperCase() || "A"}
               </div>
               <div className="hidden lg:block">
-                <p className="font-medium text-sm">{user?.name || user?.email}</p>
+                <p className="font-medium text-sm">{user?.full_name || user?.username || user?.email}</p>
                 <p className="text-xs text-gray-400">{user?.plan}</p>
               </div>
             </div>

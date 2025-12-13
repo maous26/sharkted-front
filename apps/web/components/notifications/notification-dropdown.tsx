@@ -33,7 +33,7 @@ export function NotificationDropdown() {
     queryKey: ["notifications"],
     queryFn: async () => {
       try {
-        const { data } = await alertsApi.list({ limit: 10 });
+        const { data } = await alertsApi.list({ per_page: 10 });
         // API returns { items: [...], total, page, per_page }
         return data?.items || [];
       } catch {
@@ -47,7 +47,7 @@ export function NotificationDropdown() {
 
   // Mark as clicked mutation
   const markClickedMutation = useMutation({
-    mutationFn: (id: string) => alertsApi.markClicked(id),
+    mutationFn: (id: string) => alertsApi.markRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
