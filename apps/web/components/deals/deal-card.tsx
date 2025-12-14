@@ -61,6 +61,7 @@ export function DealCard({ deal, onTrack, isNew = false }: DealCardProps) {
             src={deal.image_url}
             alt={deal.product_name}
             fill
+            unoptimized
             className={cn(
               "object-cover transition-transform duration-300",
               isHovered && "scale-110"
@@ -281,6 +282,7 @@ export function DealCardCompact({ deal, onTrack, isNew = false }: DealCardProps)
             src={deal.image_url}
             alt={deal.product_name}
             fill
+            unoptimized
             className="object-cover"
           />
         ) : (

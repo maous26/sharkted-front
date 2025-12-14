@@ -154,6 +154,7 @@ export function DealTable({ deals, onTrack, sortBy, sortOrder, onSort }: DealTab
                           src={deal.image_url}
                           alt={deal.product_name}
                           fill
+                          unoptimized
                           className="object-cover"
                         />
                       ) : (
