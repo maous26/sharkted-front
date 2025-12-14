@@ -25,9 +25,15 @@ export function formatPrice(price: number | undefined | null, currency = "EUR"):
 /**
  * Format relative time (e.g., "il y a 5 min")
  */
-export function timeAgo(date: string | Date): string {
+export function timeAgo(date: string | Date | null | undefined): string {
+  if (!date) return "-";
+
   const now = new Date();
   const past = new Date(date);
+
+  // Handle invalid dates
+  if (isNaN(past.getTime())) return "-";
+
   const diffMs = now.getTime() - past.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);

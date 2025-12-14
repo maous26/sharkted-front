@@ -34,14 +34,22 @@ export function TrendsChart({
     );
   }
 
-  // Format date for display
-  const formattedData = data.map((point) => ({
-    ...point,
-    displayDate: new Date(point.date).toLocaleDateString("fr-FR", {
-      month: "short",
-      day: "numeric",
-    }),
-  }));
+  // Format date for display (with fallback for invalid dates)
+  const formattedData = data.map((point) => {
+    let displayDate = "-";
+    try {
+      const date = new Date(point.date);
+      if (!isNaN(date.getTime())) {
+        displayDate = date.toLocaleDateString("fr-FR", {
+          month: "short",
+          day: "numeric",
+        });
+      }
+    } catch {
+      // Keep default "-"
+    }
+    return { ...point, displayDate };
+  });
 
   return (
     <ResponsiveContainer width="100%" height={300}>
