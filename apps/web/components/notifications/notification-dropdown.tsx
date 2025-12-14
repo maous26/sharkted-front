@@ -12,15 +12,19 @@ import { useAuth } from "@/hooks/use-auth";
 
 interface Notification {
   id: string;
-  deal_id: string;
-  deal_title: string;
+  deal_id?: string;
+  deal_title?: string;
+  title?: string;
+  message?: string;
   deal_brand?: string;
   deal_price?: number;
   flip_score?: number;
   margin_pct?: number;
-  sent_at: string;
-  clicked: boolean;
-  channel: string;
+  sent_at?: string;
+  created_at?: string;
+  clicked?: boolean;
+  is_read?: boolean;
+  channel?: string;
   deal_url?: string;
 }
 
@@ -67,7 +71,7 @@ export function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const unreadCount = notifications?.filter((n) => !n.clicked).length || 0;
+  const unreadCount = notifications?.filter((n) => !n.clicked && !n.is_read).length || 0;
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.clicked) {
@@ -144,7 +148,7 @@ export function NotificationDropdown() {
                     onClick={() => handleNotificationClick(notification)}
                     className={cn(
                       "w-full flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0",
-                      !notification.clicked && "bg-blue-50/50"
+                      !notification.clicked && !notification.is_read && "bg-blue-50/50"
                     )}
                   >
                     {/* Icon */}
@@ -169,12 +173,12 @@ export function NotificationDropdown() {
                         <p
                           className={cn(
                             "text-sm font-medium truncate",
-                            notification.clicked ? "text-gray-600" : "text-gray-900"
+                            (notification.clicked || notification.is_read) ? "text-gray-600" : "text-gray-900"
                           )}
                         >
-                          {notification.deal_title}
+                          {notification.deal_title || notification.title || "Notification"}
                         </p>
-                        {!notification.clicked && (
+                        {!notification.clicked && !notification.is_read && (
                           <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />
                         )}
                       </div>
@@ -201,10 +205,20 @@ export function NotificationDropdown() {
                         )}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        {formatDistanceToNow(new Date(notification.sent_at), {
-                          addSuffix: true,
-                          locale: fr,
-                        })}
+                        {(() => {
+                          const dateStr = notification.sent_at || notification.created_at;
+                          if (!dateStr) return "Date inconnue";
+                          try {
+                            const date = new Date(dateStr);
+                            if (isNaN(date.getTime())) return "Date inconnue";
+                            return formatDistanceToNow(date, {
+                              addSuffix: true,
+                              locale: fr,
+                            });
+                          } catch {
+                            return "Date inconnue";
+                          }
+                        })()}
                       </p>
                     </div>
 
