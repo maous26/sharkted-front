@@ -17,8 +17,6 @@ import {
   Search,
   ChevronRight,
   Activity,
-  DollarSign,
-  Clock,
   Flame,
   Sliders,
 } from "lucide-react";
@@ -46,7 +44,7 @@ interface Source {
   last_scraped_at: string | null;
   plan_required: string;
 }
-import { formatPrice, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 // Stat Card amelioree avec sparkline et delta
 function StatCard({
@@ -467,42 +465,13 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-gray-50 rounded-xl">
-                  <DollarSign className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatPrice(1250)}
-                  </p>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">
-                    Profit potentiel
-                  </p>
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <Activity size={24} className="text-gray-400" />
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-xl">
-                  <Target className="w-8 h-8 text-primary-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-900">
-                    {(stats?.avg_flip_score || 0).toFixed(0)}
-                  </p>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">
-                    Score moyen
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-xl">
-                  <Clock className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-900">~5j</p>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">
-                    Temps de vente
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Taux de succes</span>
-                  <span className="font-semibold text-gray-900">78%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: "78%" }} />
-                </div>
+                <p className="text-gray-500 text-sm">
+                  Les statistiques de performance seront disponibles une fois que vous aurez commence a suivre vos deals.
+                </p>
               </div>
             </CardContent>
           </Card>
