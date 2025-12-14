@@ -94,7 +94,7 @@ interface ScrapingLogsResponse {
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, hasHydrated, logout } = useAuth();
   const queryClient = useQueryClient();
   const [isRunningScrap, setIsRunningScrap] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState("");
@@ -236,14 +236,15 @@ export default function AdminPage() {
     },
   });
 
-  // Redirect effect
+  // Redirect effect - wait for hydration before checking auth
   useEffect(() => {
+    if (!hasHydrated) return; // Wait for auth state to be restored from localStorage
     if (!isAuthenticated) {
       router.push("/auth/login");
     } else if (!isAdmin) {
       router.push("/dashboard");
     }
-  }, [isAuthenticated, isAdmin, router]);
+  }, [isAuthenticated, isAdmin, hasHydrated, router]);
 
   // Helper functions
   const handleLogout = () => {
