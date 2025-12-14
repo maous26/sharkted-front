@@ -1,8 +1,9 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { User } from "@/types";
+import { useEffect, useState } from "react";
 
 interface AuthState {
   user: User | null;
@@ -15,7 +16,7 @@ interface AuthState {
   setHasHydrated: (state: boolean) => void;
 }
 
-export const useAuth = create<AuthState>()(
+const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
@@ -42,9 +43,37 @@ export const useAuth = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
     }
   )
 );
+
+// Hook wrapper to handle SSR hydration safely
+export const useAuth = () => {
+  const store = useAuthStore();
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    // Manually trigger hydration on client side only
+    useAuthStore.persist.rehydrate();
+    setIsHydrated(true);
+    store.setHasHydrated(true);
+  }, []);
+
+  // Return safe defaults during SSR
+  if (!isHydrated) {
+    return {
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      hasHydrated: false,
+      setAuth: store.setAuth,
+      logout: store.logout,
+      updateUser: store.updateUser,
+      setHasHydrated: store.setHasHydrated,
+    };
+  }
+
+  return store;
+};
