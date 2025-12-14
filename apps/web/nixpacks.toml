@@ -5,11 +5,11 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm ci"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["rm -rf .next", "npm run build"]
 
 [start]
 cmd = "npm start"
 
 [variables]
 PORT = "8080"
-CACHE_BUST = "20251214-v2"
+CACHE_BUST = "20251214-v3"
