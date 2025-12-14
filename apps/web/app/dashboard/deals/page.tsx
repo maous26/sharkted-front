@@ -110,7 +110,7 @@ export default function DealsPage() {
         )}
 
         {/* Pagination */}
-        {data && data.pages > 1 && (
+        {data && (data.pages || 1) > 1 && (
           <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
             {/* Mobile: Simple prev/next with icons */}
             <Button
@@ -126,14 +126,14 @@ export default function DealsPage() {
 
             {/* Mobile: Page indicator */}
             <span className="sm:hidden text-sm font-medium text-gray-700 px-3">
-              {page} / {data.pages}
+              {page} / {data.pages || 1}
             </span>
 
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
-              disabled={page === data.pages}
+              onClick={() => setPage((p) => Math.min(data.pages || 1, p + 1))}
+              disabled={page === (data.pages || 1)}
               className="sm:hidden"
               aria-label="Page suivante"
             >
@@ -151,7 +151,7 @@ export default function DealsPage() {
               Précédent
             </Button>
             <div className="hidden sm:flex items-center gap-1">
-              {Array.from({ length: Math.min(5, data.pages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, data.pages || 1) }, (_, i) => {
                 const pageNum = i + 1;
                 return (
                   <Button
@@ -164,13 +164,13 @@ export default function DealsPage() {
                   </Button>
                 );
               })}
-              {data.pages > 5 && <span className="px-2">...</span>}
+              {(data.pages || 1) > 5 && <span className="px-2">...</span>}
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
-              disabled={page === data.pages}
+              onClick={() => setPage((p) => Math.min(data.pages || 1, p + 1))}
+              disabled={page === (data.pages || 1)}
               className="hidden sm:flex"
             >
               Suivant
