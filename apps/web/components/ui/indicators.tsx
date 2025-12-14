@@ -650,3 +650,92 @@ export function SourceBadge({ source, size = "md" }: SourceBadgeProps) {
     </span>
   );
 }
+
+// Score breakdown display for transparency
+interface ScoreBreakdownProps {
+  marginScore?: number;
+  liquidityScore?: number;
+  popularityScore?: number;
+  breakdown?: {
+    margin_score?: number;
+    liquidity_score?: number;
+    popularity_score?: number;
+    contextual_bonus?: number;
+    size_bonus?: number;
+    brand_bonus?: number;
+    discount_bonus?: number;
+  };
+  compact?: boolean;
+}
+
+export function ScoreBreakdown({
+  marginScore,
+  liquidityScore,
+  popularityScore,
+  breakdown,
+  compact = false,
+}: ScoreBreakdownProps) {
+  const scores = [
+    { label: "Marge", score: marginScore, weight: 40, icon: TrendingUp, color: "text-green-500" },
+    { label: "Liquidite", score: liquidityScore, weight: 30, icon: Zap, color: "text-blue-500" },
+    { label: "Popularite", score: popularityScore, weight: 20, icon: Flame, color: "text-orange-500" },
+  ];
+
+  const bonuses = breakdown ? [
+    { label: "Contexte", value: breakdown.contextual_bonus, icon: CheckCircle },
+    { label: "Tailles", value: breakdown.size_bonus, icon: Star },
+    { label: "Marque", value: breakdown.brand_bonus, icon: Star },
+  ].filter(b => b.value && b.value > 0) : [];
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3">
+        {scores.map(({ label, score, icon: Icon, color }) => (
+          score !== undefined && score !== null && (
+            <div key={label} className="flex items-center gap-1" title={`${label}: ${score.toFixed(0)}/100`}>
+              <Icon size={12} className={color} />
+              <span className="text-xs font-medium text-gray-600">{score.toFixed(0)}</span>
+            </div>
+          )
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Pourquoi ce score?</p>
+      <div className="space-y-1.5">
+        {scores.map(({ label, score, weight, icon: Icon, color }) => (
+          score !== undefined && score !== null && (
+            <div key={label} className="flex items-center gap-2">
+              <Icon size={14} className={color} />
+              <span className="text-xs text-gray-600 w-16">{label}</span>
+              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={cn("h-full rounded-full transition-all duration-500", color.replace("text-", "bg-"))}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
+              <span className="text-xs font-medium text-gray-700 w-8 text-right">{score.toFixed(0)}</span>
+              <span className="text-[10px] text-gray-400">({weight}%)</span>
+            </div>
+          )
+        ))}
+      </div>
+      {bonuses.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {bonuses.map(({ label, value, icon: Icon }) => (
+            <div
+              key={label}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-[10px] font-medium"
+            >
+              <Icon size={10} />
+              +{value} {label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

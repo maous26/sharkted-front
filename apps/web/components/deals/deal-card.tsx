@@ -15,6 +15,7 @@ import {
   ActionBadge,
   SourceBadge,
   Sparkline,
+  ScoreBreakdown,
 } from "@/components/ui/indicators";
 import { Deal } from "@/types";
 import { formatPrice, cn } from "@/lib/utils";
@@ -236,6 +237,18 @@ export function DealCard({ deal, onTrack, isNew = false }: DealCardProps) {
           </div>
         )}
 
+        {/* Score Breakdown - Transparence sur le scoring */}
+        {hasScore && (deal.score!.margin_score || deal.score!.liquidity_score || deal.score!.popularity_score) && (
+          <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 mb-4">
+            <ScoreBreakdown
+              marginScore={deal.score!.margin_score}
+              liquidityScore={deal.score!.liquidity_score}
+              popularityScore={deal.score!.popularity_score}
+              breakdown={deal.score!.score_breakdown}
+            />
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2">
           <Button
@@ -260,6 +273,20 @@ export function DealCard({ deal, onTrack, isNew = false }: DealCardProps) {
           <p className="text-xs text-gray-500 mt-3 text-center italic">
             {deal.score.explanation_short}
           </p>
+        )}
+
+        {/* Risques identifies */}
+        {deal.score?.risks && deal.score.risks.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1 justify-center">
+            {deal.score.risks.slice(0, 3).map((risk, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px]"
+              >
+                {risk}
+              </span>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>
