@@ -272,6 +272,12 @@ export function TimeIndicator({
 }: TimeIndicatorProps) {
   const now = new Date();
   const then = new Date(date);
+
+  // Handle invalid dates
+  if (isNaN(then.getTime())) {
+    return <span className="text-gray-400 text-sm">-</span>;
+  }
+
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
 
   const getTimeText = () => {

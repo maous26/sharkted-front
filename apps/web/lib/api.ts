@@ -54,6 +54,16 @@ export const authApi = {
   logout: () => api.post("/auth/logout"),
 
   me: () => api.get("/auth/me"),
+
+  // User preferences (categories)
+  getPreferences: () => api.get("/auth/me/preferences"),
+
+  updatePreferences: (data: {
+    categories?: string[];
+    other_categories?: string;
+  }) => api.patch("/auth/me/preferences", data),
+
+  getCategories: () => api.get("/auth/categories"),
 };
 
 // ============================================================================

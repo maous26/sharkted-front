@@ -1,16 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { Save, Bell, User, Info, TrendingUp, Clock, BarChart3, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Save, Bell, User, Info, TrendingUp, Clock, BarChart3, AlertTriangle, ShoppingBag, Check } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { authApi } from "@/lib/api";
+
+// Product categories with labels
+const PRODUCT_CATEGORIES = [
+  { id: "sneakers", label: "Sneakers", icon: "👟" },
+  { id: "sacs", label: "Sacs", icon: "👜" },
+  { id: "doudounes", label: "Doudounes", icon: "🧥" },
+  { id: "vestes", label: "Vestes", icon: "🧥" },
+  { id: "t-shirts", label: "T-shirts", icon: "👕" },
+  { id: "sweats", label: "Sweats & Hoodies", icon: "👔" },
+  { id: "pantalons", label: "Pantalons", icon: "👖" },
+  { id: "robes", label: "Robes", icon: "👗" },
+  { id: "accessoires", label: "Accessoires", icon: "🎒" },
+  { id: "montres", label: "Montres", icon: "⌚" },
+  { id: "lunettes", label: "Lunettes", icon: "🕶️" },
+  { id: "chaussures", label: "Chaussures", icon: "👞" },
+];
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [prefsSuccess, setPrefsSuccess] = useState(false);
 
   const [profileData, setProfileData] = useState({
     name: user?.full_name || user?.username || "",
@@ -20,6 +39,61 @@ export default function SettingsPage() {
     email_alerts: user?.email_alerts ?? true,
     alert_threshold: user?.alert_threshold || 70,
   });
+
+  // Category preferences
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [otherCategories, setOtherCategories] = useState("");
+  const [showOtherInput, setShowOtherInput] = useState(false);
+
+  // Load preferences on mount
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const { data } = await authApi.getPreferences();
+        setSelectedCategories(data.categories || []);
+        setOtherCategories(data.other_categories || "");
+        setShowOtherInput(data.categories?.includes("autre") || !!data.other_categories);
+      } catch (err) {
+        console.error("Failed to load preferences:", err);
+      }
+    };
+    loadPreferences();
+  }, []);
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((c) => c !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const toggleOther = () => {
+    setShowOtherInput(!showOtherInput);
+    if (showOtherInput) {
+      setSelectedCategories((prev) => prev.filter((c) => c !== "autre"));
+      setOtherCategories("");
+    } else {
+      setSelectedCategories((prev) => [...prev, "autre"]);
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    setSavingPrefs(true);
+    setPrefsSuccess(false);
+    try {
+      await authApi.updatePreferences({
+        categories: selectedCategories,
+        other_categories: otherCategories,
+      });
+      setPrefsSuccess(true);
+      setTimeout(() => setPrefsSuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to save preferences:", err);
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -142,6 +216,104 @@ export default function SettingsPage() {
               <p className="text-sm text-amber-700">
                 <strong>Conseil :</strong> Commencez avec un seuil d'alerte a 70+ pour recevoir uniquement les meilleures opportunites. Ajustez ensuite selon votre experience et votre capacite a traiter les deals.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Product Categories Preferences */}
+        <Card className="mb-6 border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                <ShoppingBag className="text-purple-600" size={20} />
+              </div>
+              <div>
+                <CardTitle>Categories de produits</CardTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  Selectionnez les categories qui vous interessent pour le scraping et les alertes
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+              {PRODUCT_CATEGORIES.map((category) => {
+                const isSelected = selectedCategories.includes(category.id);
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => toggleCategory(category.id)}
+                    className={`relative flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                      isSelected
+                        ? "border-purple-500 bg-purple-50 text-purple-700"
+                        : "border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/50"
+                    }`}
+                  >
+                    <span className="text-xl">{category.icon}</span>
+                    <span className="text-sm font-medium">{category.label}</span>
+                    {isSelected && (
+                      <Check className="absolute top-1 right-1 text-purple-500" size={14} />
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Other category button */}
+              <button
+                onClick={toggleOther}
+                className={`relative flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                  showOtherInput
+                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    : "border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/50"
+                }`}
+              >
+                <span className="text-xl">✨</span>
+                <span className="text-sm font-medium">Autre</span>
+                {showOtherInput && (
+                  <Check className="absolute top-1 right-1 text-purple-500" size={14} />
+                )}
+              </button>
+            </div>
+
+            {/* Other categories text input */}
+            {showOtherInput && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Precisez les autres categories
+                </label>
+                <input
+                  type="text"
+                  value={otherCategories}
+                  onChange={(e) => setOtherCategories(e.target.value)}
+                  placeholder="Ex: casquettes, ceintures, bijoux..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Separez les categories par des virgules
+                </p>
+              </div>
+            )}
+
+            {/* Selected summary */}
+            {selectedCategories.length > 0 && (
+              <div className="mb-4 p-3 bg-purple-100 rounded-lg">
+                <p className="text-sm text-purple-700">
+                  <strong>{selectedCategories.filter(c => c !== "autre").length}</strong> categorie(s) selectionnee(s)
+                  {otherCategories && ` + autres: ${otherCategories}`}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <Button onClick={handleSavePreferences} disabled={savingPrefs}>
+                <Save size={16} className="mr-2" />
+                {savingPrefs ? "Enregistrement..." : "Enregistrer les preferences"}
+              </Button>
+              {prefsSuccess && (
+                <span className="text-sm text-green-600 flex items-center gap-1">
+                  <Check size={16} /> Preferences enregistrees!
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>
