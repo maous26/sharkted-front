@@ -29,11 +29,6 @@ export default function DealsPage() {
     setPage(1);
   };
 
-  const handleTrackDeal = (deal: any) => {
-    // TODO: Open track modal
-    console.log("Track deal:", deal);
-  };
-
   return (
     <div>
       <Header
@@ -100,12 +95,12 @@ export default function DealsPage() {
         ) : viewMode === "grid" || (typeof window !== "undefined" && window.innerWidth < 640) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {(data?.items || data?.deals || []).map((deal: any) => (
-              <DealCard key={deal.id} deal={deal} onTrack={handleTrackDeal} />
+              <DealCard key={deal.id} deal={deal} />
             ))}
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-            <DealTable deals={data?.items || data?.deals || []} onTrack={handleTrackDeal} />
+            <DealTable deals={data?.items || data?.deals || []} />
           </div>
         )}
 

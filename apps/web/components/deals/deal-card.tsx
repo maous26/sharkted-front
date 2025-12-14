@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, ShoppingCart, Eye, Zap } from "lucide-react";
+import { ExternalLink, ShoppingCart, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +22,11 @@ import { formatPrice, cn } from "@/lib/utils";
 
 interface DealCardProps {
   deal: Deal;
-  onTrack?: (deal: Deal) => void;
   isNew?: boolean;
   compact?: boolean;
 }
 
-export function DealCard({ deal, onTrack, isNew = false }: DealCardProps) {
+export function DealCard({ deal, isNew = false }: DealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const hasScore = deal.score && deal.score.flip_score > 0;
   const hasStats = deal.vinted_stats && deal.vinted_stats.nb_listings > 0;
@@ -250,23 +249,12 @@ export function DealCard({ deal, onTrack, isNew = false }: DealCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2">
-          <Button
-            variant="primary"
-            size="sm"
-            className="flex-1 bg-primary-600 hover:bg-primary-700"
-            onClick={() => onTrack?.(deal)}
-          >
-            <Eye size={16} className="mr-1.5" />
-            Tracker
+        <Link href={deal.product_url} target="_blank" className="block">
+          <Button variant="primary" size="sm" className="w-full bg-primary-600 hover:bg-primary-700">
+            <ExternalLink size={16} className="mr-1.5" />
+            Voir le deal
           </Button>
-          <Link href={deal.product_url} target="_blank" className="flex-1">
-            <Button variant="outline" size="sm" className="w-full">
-              <ExternalLink size={16} className="mr-1.5" />
-              Voir
-            </Button>
-          </Link>
-        </div>
+        </Link>
 
         {/* Explication courte */}
         {deal.score?.explanation_short && (
@@ -294,7 +282,7 @@ export function DealCard({ deal, onTrack, isNew = false }: DealCardProps) {
 }
 
 // Version compacte pour le feed temps reel
-export function DealCardCompact({ deal, onTrack, isNew = false }: DealCardProps) {
+export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
   return (
     <div
       className={cn(
@@ -346,16 +334,11 @@ export function DealCardCompact({ deal, onTrack, isNew = false }: DealCardProps)
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 flex-shrink-0">
-        <Button variant="ghost" size="sm" onClick={() => onTrack?.(deal)}>
-          <Eye size={18} />
+      <Link href={deal.product_url} target="_blank" className="flex-shrink-0">
+        <Button variant="ghost" size="sm">
+          <ExternalLink size={18} />
         </Button>
-        <Link href={deal.product_url} target="_blank">
-          <Button variant="ghost" size="sm">
-            <ExternalLink size={18} />
-          </Button>
-        </Link>
-      </div>
+      </Link>
     </div>
   );
 }
