@@ -18,12 +18,51 @@ interface DealsQueryParams {
   sort_order?: string;
 }
 
+// Map API response to frontend Deal format
+function mapApiDealToFrontend(apiDeal: any): Deal {
+  return {
+    id: String(apiDeal.id),
+    product_name: apiDeal.title || apiDeal.product_name || "Unknown",
+    brand: apiDeal.seller_name || apiDeal.brand || apiDeal.source || "",
+    model: apiDeal.model || "",
+    category: apiDeal.category || "",
+    color: apiDeal.color || "",
+    gender: apiDeal.gender || "",
+    original_price: apiDeal.original_price || undefined,
+    sale_price: apiDeal.price || apiDeal.sale_price || 0,
+    discount_pct: apiDeal.discount_percent || apiDeal.discount_pct || undefined,
+    product_url: apiDeal.url || apiDeal.product_url || "",
+    image_url: apiDeal.image_url || undefined,
+    sizes_available: apiDeal.sizes_available || [],
+    stock_available: apiDeal.in_stock ?? true,
+    source_name: apiDeal.source || apiDeal.source_name || "",
+    detected_at: apiDeal.first_seen_at || apiDeal.detected_at || new Date().toISOString(),
+    vinted_stats: apiDeal.vinted_stats || undefined,
+    score: apiDeal.score || undefined,
+  };
+}
+
+function mapApiResponseToFrontend(data: any): DealsListResponse {
+  const deals = (data.deals || data.items || []).map(mapApiDealToFrontend);
+  return {
+    items: deals,
+    deals: deals,
+    total: data.total || 0,
+    page: data.page || 1,
+    per_page: data.per_page || data.limit || 20,
+    pages: data.pages || Math.ceil((data.total || 0) / (data.per_page || data.limit || 20)) || 1,
+    limit: data.limit,
+    offset: data.offset,
+    has_more: data.has_more,
+  };
+}
+
 export function useDeals(params: DealsQueryParams = {}) {
   return useQuery<DealsListResponse>({
     queryKey: ["deals", params],
     queryFn: async () => {
       const { data } = await dealsApi.list(params);
-      return data;
+      return mapApiResponseToFrontend(data);
     },
   });
 }
@@ -33,7 +72,7 @@ export function useDeal(id: string) {
     queryKey: ["deal", id],
     queryFn: async () => {
       const { data } = await dealsApi.get(id);
-      return data;
+      return mapApiDealToFrontend(data);
     },
     enabled: !!id,
   });
@@ -44,7 +83,9 @@ export function useTopDeals(limit = 10) {
     queryKey: ["deals", "top", limit],
     queryFn: async () => {
       const { data } = await dealsApi.getTopRecommended(limit);
-      return data;
+      // API returns { deals: [...] } or array directly
+      const deals = Array.isArray(data) ? data : (data.deals || data.items || []);
+      return deals.map(mapApiDealToFrontend);
     },
   });
 }
