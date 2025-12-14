@@ -31,8 +31,22 @@ export interface VintedStats {
   liquidity_score?: number;
 }
 
+export interface ScoreBreakdown {
+  margin_score?: number;
+  liquidity_score?: number;
+  popularity_score?: number;
+  contextual_bonus?: number;
+  size_bonus?: number;
+  brand_bonus?: number;
+  discount_bonus?: number;
+}
+
 export interface DealScore {
   flip_score: number;
+  margin_score?: number;
+  liquidity_score?: number;
+  popularity_score?: number;
+  score_breakdown?: ScoreBreakdown;
   recommended_action?: "buy" | "watch" | "ignore";
   recommended_price?: number;
   confidence?: number;

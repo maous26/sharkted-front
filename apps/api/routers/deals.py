@@ -33,9 +33,23 @@ class VintedStatsResponse(BaseModel):
         from_attributes = True
 
 
+class ScoreBreakdownResponse(BaseModel):
+    """Score breakdown details."""
+    margin_contribution: Optional[float] = None
+    liquidity_contribution: Optional[float] = None
+    popularity_contribution: Optional[float] = None
+    size_bonus: Optional[float] = None
+    brand_bonus: Optional[float] = None
+    discount_bonus: Optional[float] = None
+
+
 class DealScoreResponse(BaseModel):
     """Deal score response schema."""
     flip_score: float
+    margin_score: Optional[float] = None
+    liquidity_score: Optional[float] = None
+    popularity_score: Optional[float] = None
+    score_breakdown: Optional[ScoreBreakdownResponse] = None
     recommended_action: Optional[str]
     recommended_price: Optional[float]
     confidence: Optional[float]
@@ -193,6 +207,10 @@ async def list_deals(
             ) if deal.vinted_stats else None,
             score=DealScoreResponse(
                 flip_score=float(deal.score.flip_score),
+                margin_score=float(deal.score.margin_score) if deal.score.margin_score else None,
+                liquidity_score=float(deal.score.liquidity_score) if deal.score.liquidity_score else None,
+                popularity_score=float(deal.score.popularity_score) if deal.score.popularity_score else None,
+                score_breakdown=ScoreBreakdownResponse(**deal.score.score_breakdown) if deal.score.score_breakdown else None,
                 recommended_action=deal.score.recommended_action,
                 recommended_price=float(deal.score.recommended_price) if deal.score.recommended_price else None,
                 confidence=float(deal.score.confidence) if deal.score.confidence else None,
@@ -264,6 +282,10 @@ async def get_deal(
         ) if deal.vinted_stats else None,
         score=DealScoreResponse(
             flip_score=float(deal.score.flip_score),
+            margin_score=float(deal.score.margin_score) if deal.score.margin_score else None,
+            liquidity_score=float(deal.score.liquidity_score) if deal.score.liquidity_score else None,
+            popularity_score=float(deal.score.popularity_score) if deal.score.popularity_score else None,
+            score_breakdown=ScoreBreakdownResponse(**deal.score.score_breakdown) if deal.score.score_breakdown else None,
             recommended_action=deal.score.recommended_action,
             recommended_price=float(deal.score.recommended_price) if deal.score.recommended_price else None,
             confidence=float(deal.score.confidence) if deal.score.confidence else None,
@@ -436,6 +458,10 @@ async def get_top_recommended_deals(
             ) if deal.vinted_stats else None,
             score=DealScoreResponse(
                 flip_score=float(deal.score.flip_score),
+                margin_score=float(deal.score.margin_score) if deal.score.margin_score else None,
+                liquidity_score=float(deal.score.liquidity_score) if deal.score.liquidity_score else None,
+                popularity_score=float(deal.score.popularity_score) if deal.score.popularity_score else None,
+                score_breakdown=ScoreBreakdownResponse(**deal.score.score_breakdown) if deal.score.score_breakdown else None,
                 recommended_action=deal.score.recommended_action,
                 recommended_price=float(deal.score.recommended_price) if deal.score.recommended_price else None,
                 confidence=float(deal.score.confidence) if deal.score.confidence else None,
