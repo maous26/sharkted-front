@@ -63,11 +63,15 @@ export interface Deal {
 }
 
 export interface DealsListResponse {
-  items: Deal[];
+  items?: Deal[];
+  deals?: Deal[];  // API returns 'deals' instead of 'items'
   total: number;
-  page: number;
-  per_page: number;
-  pages: number;
+  page?: number;
+  per_page?: number;
+  pages?: number;
+  limit?: number;
+  offset?: number;
+  has_more?: boolean;
 }
 
 export interface Outcome {
