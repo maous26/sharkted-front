@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ExternalLink, Eye, ChevronUp, ChevronDown, Minus } from "lucide-react";
+import { ExternalLink, ChevronUp, ChevronDown, Minus } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -25,7 +25,6 @@ import { formatPrice, cn } from "@/lib/utils";
 
 interface DealTableProps {
   deals: Deal[];
-  onTrack?: (deal: Deal) => void;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   onSort?: (column: string) => void;
@@ -69,7 +68,7 @@ function SortableHeader({
   );
 }
 
-export function DealTable({ deals, onTrack, sortBy, sortOrder, onSort }: DealTableProps) {
+export function DealTable({ deals, sortBy, sortOrder, onSort }: DealTableProps) {
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -273,22 +272,12 @@ export function DealTable({ deals, onTrack, sortBy, sortOrder, onSort }: DealTab
 
                 {/* Actions */}
                 <TableCell>
-                  <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => onTrack?.(deal)}
-                      className="bg-primary-600 hover:bg-primary-700"
-                    >
-                      <Eye size={14} className="mr-1" />
-                      Tracker
+                  <Link href={deal.product_url} target="_blank">
+                    <Button variant="primary" size="sm" className="bg-primary-600 hover:bg-primary-700">
+                      <ExternalLink size={14} className="mr-1" />
+                      Voir
                     </Button>
-                    <Link href={deal.product_url} target="_blank">
-                      <Button variant="outline" size="sm">
-                        <ExternalLink size={14} />
-                      </Button>
-                    </Link>
-                  </div>
+                  </Link>
                 </TableCell>
               </TableRow>
             );
