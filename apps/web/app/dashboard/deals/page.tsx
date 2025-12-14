@@ -93,19 +93,19 @@ export default function DealsPage() {
           <div className="text-center py-8 sm:py-12 text-red-500">
             Erreur lors du chargement des deals
           </div>
-        ) : data?.items.length === 0 ? (
+        ) : ((data?.items || data?.deals || []).length === 0) ? (
           <div className="text-center py-8 sm:py-12 text-gray-500">
             Aucun deal trouvé avec ces filtres
           </div>
-        ) : viewMode === "grid" || window.innerWidth < 640 ? (
+        ) : viewMode === "grid" || (typeof window !== "undefined" && window.innerWidth < 640) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {data?.items.map((deal) => (
+            {(data?.items || data?.deals || []).map((deal: any) => (
               <DealCard key={deal.id} deal={deal} onTrack={handleTrackDeal} />
             ))}
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-            <DealTable deals={data?.items || []} onTrack={handleTrackDeal} />
+            <DealTable deals={data?.items || data?.deals || []} onTrack={handleTrackDeal} />
           </div>
         )}
 
