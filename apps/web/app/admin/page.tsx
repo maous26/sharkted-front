@@ -33,7 +33,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { scrapingApi, analyticsApi } from "@/lib/api";
+import { scrapingApi, analyticsApi, adminApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { LiveDot } from "@/components/ui/indicators";
 import { useAuth } from "@/hooks/use-auth";
@@ -115,19 +115,23 @@ export default function AdminPage() {
   const isAdmin = user?.plan === "PRO" || user?.plan === "AGENCY" || user?.plan === "pro" || user?.plan === "agency" || user?.email === "admin@sharkted.fr";
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURN
-  // Fetch system status
+  // Fetch system status from API
   const { data: status } = useQuery<SystemStatus>({
     queryKey: ["admin", "status"],
     queryFn: async () => {
-      // Simulated data - replace with actual API call
-      return {
-        database: "connected",
-        scraping: "idle",
-        last_scrape: new Date().toISOString(),
-        total_deals: 1250,
-        total_users: 45,
-        active_sources: 6,
-      };
+      try {
+        const { data } = await adminApi.stats();
+        return data;
+      } catch {
+        return {
+          database: "error",
+          scraping: "idle",
+          last_scrape: null,
+          total_deals: 0,
+          total_users: 0,
+          active_sources: 0,
+        };
+      }
     },
     refetchInterval: 10000,
     enabled: isAuthenticated && isAdmin,
