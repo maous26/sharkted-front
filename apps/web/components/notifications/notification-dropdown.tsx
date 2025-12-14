@@ -8,6 +8,7 @@ import { alertsApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Notification {
   id: string;
@@ -27,8 +28,9 @@ export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const { isAuthenticated, hasHydrated } = useAuth();
 
-  // Fetch notifications
+  // Fetch notifications - only when auth is ready
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ["notifications"],
     queryFn: async () => {
@@ -43,6 +45,7 @@ export function NotificationDropdown() {
     },
     refetchInterval: 30000, // Refresh every 30 seconds
     retry: false, // Don't retry on auth errors
+    enabled: hasHydrated && isAuthenticated, // Only fetch when auth is ready
   });
 
   // Mark as clicked mutation
