@@ -87,59 +87,67 @@ export default function AnalyticsPage() {
               <CardTitle>Top Marques</CardTitle>
             </CardHeader>
             <CardContent>
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-sm text-gray-500 border-b">
-                    <th className="pb-2">Marque</th>
-                    <th className="pb-2">Deals</th>
-                    <th className="pb-2">Score moy.</th>
-                    <th className="pb-2">Marge moy.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {brandStats?.map((brand: any, i: number) => (
-                    <tr key={i} className="border-b last:border-0">
-                      <td className="py-3 font-medium">{brand.brand}</td>
-                      <td className="py-3">{brand.deal_count}</td>
-                      <td className="py-3">{brand.avg_flip_score.toFixed(1)}</td>
-                      <td className="py-3 text-green-600">
-                        +{brand.avg_margin_pct.toFixed(1)}%
-                      </td>
+              {!brandStats || brandStats.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">Aucune donnee disponible</div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-sm text-gray-500 border-b">
+                      <th className="pb-2">Marque</th>
+                      <th className="pb-2">Deals</th>
+                      <th className="pb-2">Score moy.</th>
+                      <th className="pb-2">Marge moy.</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {brandStats.map((brand: any, i: number) => (
+                      <tr key={i} className="border-b last:border-0">
+                        <td className="py-3 font-medium">{brand.brand}</td>
+                        <td className="py-3">{brand.deal_count}</td>
+                        <td className="py-3">{(brand.avg_flip_score || 0).toFixed(1)}</td>
+                        <td className="py-3 text-green-600">
+                          +{(brand.avg_margin_pct || 0).toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </CardContent>
           </Card>
 
           {/* Categories Stats */}
           <Card>
             <CardHeader>
-              <CardTitle>Par Catégorie</CardTitle>
+              <CardTitle>Par Categorie</CardTitle>
             </CardHeader>
             <CardContent>
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-sm text-gray-500 border-b">
-                    <th className="pb-2">Catégorie</th>
-                    <th className="pb-2">Deals</th>
-                    <th className="pb-2">Score moy.</th>
-                    <th className="pb-2">Marge moy.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {categoryStats?.map((cat: any, i: number) => (
-                    <tr key={i} className="border-b last:border-0">
-                      <td className="py-3 font-medium capitalize">{cat.category}</td>
-                      <td className="py-3">{cat.deal_count}</td>
-                      <td className="py-3">{cat.avg_flip_score.toFixed(1)}</td>
-                      <td className="py-3 text-green-600">
-                        +{cat.avg_margin_pct.toFixed(1)}%
-                      </td>
+              {!categoryStats || categoryStats.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">Aucune donnee disponible</div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-sm text-gray-500 border-b">
+                      <th className="pb-2">Categorie</th>
+                      <th className="pb-2">Deals</th>
+                      <th className="pb-2">Score moy.</th>
+                      <th className="pb-2">Marge moy.</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {categoryStats.map((cat: any, i: number) => (
+                      <tr key={i} className="border-b last:border-0">
+                        <td className="py-3 font-medium capitalize">{cat.category}</td>
+                        <td className="py-3">{cat.deal_count}</td>
+                        <td className="py-3">{(cat.avg_flip_score || 0).toFixed(1)}</td>
+                        <td className="py-3 text-green-600">
+                          +{(cat.avg_margin_pct || 0).toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </CardContent>
           </Card>
         </div>
