@@ -202,7 +202,41 @@ export const outcomesApi = {
 // ============================================================================
 export const adminApi = {
   stats: () => api.get("/v1/admin/stats"),
+  
+  // Users
+  users: () => api.get("/v1/admin/users"),
+  updateUserPlan: (userId: number, plan: string) => api.patch(`/v1/admin/users/${userId}/plan`, { plan }),
+  deleteUser: (userId: number) => api.delete(`/v1/admin/users/${userId}`),
+  
+  // Subscription tiers
+  subscriptionTiers: () => api.get("/v1/admin/subscription-tiers"),
+  
+  // Proxies
+  proxies: () => api.get("/v1/admin/proxies"),
+  createProxy: (data: {
+    name: string;
+    provider: string;
+    proxy_type: string;
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    country?: string;
+    zone?: string;
+    enabled?: boolean;
+    is_default?: boolean;
+  }) => api.post("/v1/admin/proxies", data),
+  getProxy: (id: number) => api.get(`/v1/admin/proxies/${id}`),
+  updateProxy: (id: number, data: Record<string, unknown>) => api.patch(`/v1/admin/proxies/${id}`, data),
+  deleteProxy: (id: number) => api.delete(`/v1/admin/proxies/${id}`),
+  testProxy: (id: number) => api.post(`/v1/admin/proxies/${id}/test`),
+  
+  // Proxy costs
+  proxyCosts: (days?: number) => api.get("/v1/admin/proxy-costs", { params: { days } }),
+  proxyDecisionTest: (site: string, score?: number, hasAlert?: boolean) => 
+    api.get("/v1/admin/proxy-decision-test", { params: { site, score, has_alert: hasAlert } }),
 };
+
 
 // ============================================================================
 // FAVORITES API

@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { LiveDot } from "@/components/ui/indicators";
 import { useAuth } from "@/hooks/use-auth";
 
+import { ProxyManager } from "@/components/admin/ProxyManager";
 interface ScrapingSource {
   id: string;
   name: string;
@@ -1101,6 +1102,20 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+          </CardContent>
+        </Card>
+
+
+        {/* Proxies Management */}
+        <Card>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Network size={18} className="text-purple-500" />
+              Proxies & Web Unlocker
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProxyManager />
           </CardContent>
         </Card>
 
