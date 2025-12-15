@@ -279,6 +279,7 @@ class VintedService:
         limit: int = 50,
         price_from: Optional[float] = None,
         price_to: Optional[float] = None,
+        status: str = "all",
         retry_count: int = 0
     ) -> List[Dict[str, Any]]:
         """
@@ -289,6 +290,7 @@ class VintedService:
             limit: Nombre max de résultats
             price_from: Prix minimum
             price_to: Prix maximum
+            status: "all", "active" (en vente), "sold" (vendu)
             retry_count: Nombre de retry (interne)
 
         Returns:
@@ -315,6 +317,10 @@ class VintedService:
             params["price_from"] = int(price_from)
         if price_to:
             params["price_to"] = int(price_to)
+
+        # Filtrer par statut (vendu = meilleur indicateur de prix réel)
+        if status == "sold":
+            params["status[]"] = "sold"
 
         try:
             await self._rate_limit()
@@ -423,11 +429,12 @@ class VintedService:
         # Construire la query de recherche
         query = self._build_search_query(product_name, brand, category)
 
-        # Définir les limites de prix
-        price_to = expected_price * 4 if expected_price else None
+        # Définir les limites de prix - prix max = 2x le prix d'achat (occasion)
+        # On cherche des prix occasion, pas des prix neufs
+        price_to = expected_price * 2 if expected_price else None
         price_from = 5  # Minimum 5€ pour filtrer les annonces invalides
 
-        # Rechercher les produits
+        # Rechercher les produits (priorité aux vendus pour avoir de vrais prix)
         items = await self.search_products(
             query=query,
             limit=settings.VINTED_SEARCH_LIMIT,
@@ -471,9 +478,22 @@ class VintedService:
                 "query_used": query
             }
 
-        # Filtrer les outliers (prix > 3x la médiane)
-        initial_median = statistics.median(prices)
-        filtered_prices = [p for p in prices if p <= initial_median * 3]
+        # Filtrer les outliers de manière plus agressive
+        # 1. D'abord, si on a un expected_price, filtrer les prix trop au-dessus
+        if expected_price:
+            # Les articles occasion sont généralement entre 50% et 150% du prix neuf
+            max_reasonable = expected_price * 1.5
+            filtered_prices = [p for p in prices if p <= max_reasonable]
+            if len(filtered_prices) < 5:
+                # Si trop peu de résultats, on garde tout
+                filtered_prices = prices
+        else:
+            filtered_prices = prices
+
+        # 2. Ensuite, filtrer les outliers (prix > 2x la médiane)
+        if len(filtered_prices) >= 5:
+            initial_median = statistics.median(filtered_prices)
+            filtered_prices = [p for p in filtered_prices if p <= initial_median * 2]
 
         if len(filtered_prices) < 3:
             filtered_prices = prices
@@ -602,14 +622,20 @@ async def get_vinted_stats_for_deal(
 ) -> Dict[str, Any]:
     """
     Fonction helper pour obtenir les stats Vinted complètes pour un deal.
+
+    Le sale_price est le prix d'achat en magasin (avec promo).
+    On cherche les prix occasion sur Vinted qui devraient être
+    inférieurs ou proches du prix magasin original.
     """
 
     # Récupérer les stats de marché
+    # expected_price = prix d'achat, les prix Vinted occasion devraient
+    # être autour de ce prix pour que le flip soit rentable
     stats = await vinted_service.get_market_stats(
         product_name=product_name,
         brand=brand,
         category=category,
-        expected_price=sale_price * 2
+        expected_price=sale_price
     )
 
     if stats.get("nb_listings", 0) == 0 or not stats.get("prices"):
