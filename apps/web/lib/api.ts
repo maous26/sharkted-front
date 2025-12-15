@@ -133,7 +133,7 @@ export const scrapingApi = {
 
   // Rescrape Vinted stats for existing deals
   rescrapeVintedStats: (limit: number = 100) =>
-    api.post("/v1/scraping/rescrape-vinted-stats", null, { params: { limit } }),
+    api.post("/v1/sources/rescrape-vinted-stats", null, { params: { limit } }),
 };
 
 // ============================================================================
