@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, ShoppingCart, Zap } from "lucide-react";
+import { ExternalLink, Eye, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,10 +108,10 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
           </div>
         </div>
 
-        {/* Quick Actions - Bottom Right (visible on hover) */}
+        {/* Quick Action - Bottom Right (visible on hover) */}
         <div
           className={cn(
-            "absolute bottom-3 right-3 z-10 flex gap-2 transition-all duration-200",
+            "absolute bottom-3 right-3 z-10 transition-all duration-200",
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
           )}
         >
@@ -124,23 +124,6 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
               <ExternalLink size={16} />
             </Button>
           </Link>
-          {isAuthenticated && (
-            <Button
-              variant="primary"
-              size="sm"
-              className={cn(
-                "shadow-lg h-9 w-9 p-0 transition-colors",
-                isFavorite
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-green-500 hover:bg-green-600 text-white"
-              )}
-              onClick={() => toggleFavorite(dealIdNum)}
-              disabled={isFavoriteLoading}
-              title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-            >
-              <ShoppingCart size={16} />
-            </Button>
-          )}
         </div>
       </div>
 
@@ -266,12 +249,31 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         )}
 
         {/* Actions */}
-        <Link href={deal.product_url} target="_blank" className="block">
-          <Button variant="primary" size="sm" className="w-full bg-primary-600 hover:bg-primary-700">
-            <ExternalLink size={16} className="mr-1.5" />
-            Voir le deal
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          {isAuthenticated && (
+            <Button
+              variant="primary"
+              size="sm"
+              className={cn(
+                "flex-1 transition-colors",
+                isFavorite
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-orange-500 hover:bg-orange-600"
+              )}
+              onClick={() => toggleFavorite(dealIdNum)}
+              disabled={isFavoriteLoading}
+            >
+              <Eye size={16} className="mr-1.5" />
+              {isFavorite ? "Suivi" : "Tracker"}
+            </Button>
+          )}
+          <Link href={deal.product_url} target="_blank" className={isAuthenticated ? "flex-1" : "w-full"}>
+            <Button variant="outline" size="sm" className="w-full">
+              <ExternalLink size={16} className="mr-1.5" />
+              Voir
+            </Button>
+          </Link>
+        </div>
 
         {/* Explication courte */}
         {deal.score?.explanation_short && (
@@ -364,14 +366,17 @@ export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
             variant="ghost"
             size="sm"
             className={cn(
-              "h-9 w-9 p-0 transition-colors",
-              isFavorite ? "text-green-600 bg-green-50" : "text-gray-400 hover:text-green-500"
+              "px-3 transition-colors",
+              isFavorite
+                ? "text-green-600 bg-green-50 hover:bg-green-100"
+                : "text-orange-500 hover:text-orange-600 hover:bg-orange-50"
             )}
             onClick={() => toggleFavorite(dealIdNum)}
             disabled={isFavoriteLoading}
             title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
           >
-            <ShoppingCart size={18} />
+            <Eye size={16} className="mr-1" />
+            {isFavorite ? "Suivi" : "Tracker"}
           </Button>
         )}
         <Link href={deal.product_url} target="_blank">

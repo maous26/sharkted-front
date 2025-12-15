@@ -3,15 +3,45 @@ Scheduler service - Gestion des jobs de scraping planifiés
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from loguru import logger
+from sqlalchemy import delete
 
 from config import settings
 
 # Global scheduler state
 _scheduler_task: Optional[asyncio.Task] = None
 _scheduler_running: bool = False
+
+
+async def cleanup_old_deals_job():
+    """Job de nettoyage des deals de plus de 5 jours"""
+    from database import async_session
+    from models.deal import Deal
+
+    logger.info("🧹 Nettoyage des deals anciens (> 5 jours)...")
+
+    try:
+        async with async_session() as db:
+            # Calculer la date limite (5 jours)
+            cutoff_date = datetime.utcnow() - timedelta(days=5)
+
+            # Supprimer les deals plus vieux que 5 jours
+            result = await db.execute(
+                delete(Deal).where(Deal.first_seen_at < cutoff_date)
+            )
+            deleted_count = result.rowcount
+
+            await db.commit()
+
+            if deleted_count > 0:
+                logger.info(f"🗑️ {deleted_count} deals anciens supprimés")
+            else:
+                logger.info("✅ Aucun deal ancien à supprimer")
+
+    except Exception as e:
+        logger.error(f"❌ Erreur lors du nettoyage des deals: {e}")
 
 
 async def scraping_job():
@@ -43,6 +73,8 @@ async def scheduler_loop():
 
     interval_minutes = settings.SCRAPE_INTERVAL_MINUTES
     interval_seconds = interval_minutes * 60
+    cleanup_counter = 0  # Compteur pour le nettoyage (1x par jour)
+    cleanup_interval = 24 * 60 // interval_minutes  # Nombre d'itérations pour 24h
 
     logger.info(f"⏰ Scheduler démarré - Intervalle: {interval_minutes} minutes")
 
@@ -50,6 +82,12 @@ async def scheduler_loop():
         try:
             # Exécuter le job de scraping
             await scraping_job()
+
+            # Nettoyage des deals anciens (1x par jour)
+            cleanup_counter += 1
+            if cleanup_counter >= cleanup_interval:
+                await cleanup_old_deals_job()
+                cleanup_counter = 0
 
             # Attendre l'intervalle suivant
             logger.info(f"💤 Prochain scraping dans {interval_minutes} minutes...")
@@ -71,6 +109,9 @@ async def start_scheduler():
     if _scheduler_task is not None and not _scheduler_task.done():
         logger.warning("⚠️ Le scheduler est déjà en cours d'exécution")
         return
+
+    # Nettoyer les deals anciens au démarrage
+    await cleanup_old_deals_job()
 
     _scheduler_running = True
     _scheduler_task = asyncio.create_task(scheduler_loop())
