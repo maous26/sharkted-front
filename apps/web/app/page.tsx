@@ -97,9 +97,9 @@ export default function Home() {
 
             {/* Subheadline */}
             <p className="text-lg sm:text-xl md:text-2xl text-gray-400 mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed">
-              Sharkted scanne <span className="text-white font-medium">Nike, Adidas, Courir</span> et
-              10+ sources pour calculer ta{" "}
-              <span className="text-green-400 font-medium">marge de revente Vinted</span> en temps reel.
+              Sharkted scanne <span className="text-white font-medium">Courir, Footlocker, JD Sports, Size, Kith</span> et
+              d autres sources pour calculer ton{" "}
+              <span className="text-green-400 font-medium">potentiel de revente</span> en temps reel.
             </p>
 
             {/* CTA Buttons */}
@@ -183,14 +183,14 @@ export default function Home() {
                 icon: Zap,
                 title: "Detection automatique",
                 description:
-                  "Scan continu de Nike, Adidas, Courir, Footlocker et 10+ sources pour ne rater aucune promo.",
+                  "Scan continu de Courir, Footlocker, JD Sports, Size, Kith et d'autres sources pour ne rater aucune promo.",
                 color: "from-yellow-500 to-orange-500",
               },
               {
                 icon: TrendingUp,
                 title: "FlipScore intelligent",
                 description:
-                  "Chaque deal est note de 0 a 100 selon la marge, la liquidite et la popularite sur Vinted.",
+                  "Chaque deal est note de 0 a 100 selon la remise, la marque et le potentiel de revente.",
                 color: "from-green-500 to-emerald-500",
               },
               {
@@ -306,7 +306,7 @@ export default function Home() {
                 <p className="text-gray-400 mb-6">Pour decouvrir et tester</p>
                 <ul className="space-y-3 mb-8">
                   {[
-                    "5 sources (Nike, Adidas, Courir...)",
+                    "5 sources (Courir, JD Sports, Size...)",
                     "10 deals / jour",
                     "FlipScore basique",
                     "Alertes email",
