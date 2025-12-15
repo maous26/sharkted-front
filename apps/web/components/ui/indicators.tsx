@@ -628,6 +628,7 @@ export function SourceBadge({ source, size = "md" }: SourceBadgeProps) {
     ralphlauren: { color: "text-blue-900", bg: "bg-blue-100" },
     galerieslafayette: { color: "text-black", bg: "bg-gray-100" },
     printemps: { color: "text-pink-600", bg: "bg-pink-100" },
+    kith: { color: "text-black", bg: "bg-gray-200" },
   };
 
   const config = sourceConfig[source.toLowerCase()] || { color: "text-gray-600", bg: "bg-gray-100" };
