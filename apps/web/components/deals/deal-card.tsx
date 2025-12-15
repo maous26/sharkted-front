@@ -18,7 +18,7 @@ import {
   ScoreBreakdown,
 } from "@/components/ui/indicators";
 import { Deal } from "@/types";
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice, cn, proxyImageUrl } from "@/lib/utils";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/use-favorites";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -292,7 +292,7 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
       <div className="relative h-48 bg-gray-100 overflow-hidden">
         {deal.image_url ? (
           <Image
-            src={deal.image_url}
+            src={proxyImageUrl(deal.image_url)}
             alt={deal.product_name}
             fill
             unoptimized
@@ -567,7 +567,7 @@ export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
       <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
         {deal.image_url ? (
           <Image
-            src={deal.image_url}
+            src={proxyImageUrl(deal.image_url)}
             alt={deal.product_name}
             fill
             unoptimized

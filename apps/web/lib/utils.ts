@@ -62,3 +62,30 @@ export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength - 3) + "...";
 }
+
+/**
+ * Proxy image URL through API to bypass hotlinking protection
+ */
+const PROXY_DOMAINS = [
+  "courir.com",
+  "zalando.",
+  "footlocker.",
+  "jdsports.",
+  "snipes.",
+  "demandware.static",
+];
+
+export function proxyImageUrl(imageUrl: string | undefined | null): string {
+  if (!imageUrl) return "";
+
+  // Check if image needs proxying
+  const needsProxy = PROXY_DOMAINS.some(domain =>
+    imageUrl.toLowerCase().includes(domain)
+  );
+
+  if (!needsProxy) return imageUrl;
+
+  // Proxy through API
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.sharkted.fr";
+  return `${apiUrl}/v1/images/proxy?url=${encodeURIComponent(imageUrl)}`;
+}
