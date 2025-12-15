@@ -595,6 +595,148 @@ async def delete_scraping_logs(
     }
 
 
+@router.post("/rescrape-vinted-stats")
+async def rescrape_vinted_stats(
+    background_tasks: BackgroundTasks,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Rescrape les stats Vinted pour tous les deals existants (admin uniquement).
+    Utilise les nouveaux filtres améliorés pour obtenir des prix plus réalistes.
+    """
+    if current_user.plan.value not in ["pro", "agency"]:
+        raise HTTPException(status_code=403, detail="Accès non autorisé")
+
+    from services.vinted_service import get_vinted_stats_for_deal
+    from services.scoring_service import score_deal
+    from models.vinted_stats import VintedStats
+    from models.deal_score import DealScore
+
+    async def rescrape_all_deals():
+        """Background task to rescrape all deals"""
+        from database import async_session
+
+        logger.info(f"🔄 Démarrage du rescraping Vinted pour {limit} deals...")
+
+        async with async_session() as session:
+            # Get all deals with their current stats
+            query = (
+                select(Deal)
+                .order_by(Deal.first_seen_at.desc())
+                .limit(limit)
+            )
+            result = await session.execute(query)
+            deals = result.scalars().all()
+
+            updated_count = 0
+            error_count = 0
+
+            for deal in deals:
+                try:
+                    # Get new Vinted stats with improved filtering
+                    new_stats = await get_vinted_stats_for_deal(
+                        product_name=deal.title,
+                        brand=deal.seller_name,
+                        sale_price=float(deal.price),
+                        category=deal.category
+                    )
+
+                    if new_stats.get("nb_listings", 0) > 0:
+                        # Update or create VintedStats
+                        existing_stats_query = select(VintedStats).where(VintedStats.deal_id == deal.id)
+                        existing_result = await session.execute(existing_stats_query)
+                        existing_stats = existing_result.scalar_one_or_none()
+
+                        if existing_stats:
+                            # Update existing stats
+                            existing_stats.nb_listings = new_stats.get("nb_listings", 0)
+                            existing_stats.price_min = new_stats.get("price_min")
+                            existing_stats.price_max = new_stats.get("price_max")
+                            existing_stats.price_avg = new_stats.get("price_avg")
+                            existing_stats.price_median = new_stats.get("price_median")
+                            existing_stats.price_p25 = new_stats.get("price_p25")
+                            existing_stats.price_p75 = new_stats.get("price_p75")
+                            existing_stats.margin_euro = new_stats.get("margin_euro")
+                            existing_stats.margin_pct = new_stats.get("margin_percent")
+                            existing_stats.liquidity_score = new_stats.get("liquidity_score")
+                            existing_stats.sample_listings = new_stats.get("sample_listings", [])
+                            existing_stats.search_query = new_stats.get("query_used", "")
+                            existing_stats.updated_at = datetime.utcnow()
+                        else:
+                            # Create new stats
+                            new_vinted_stats = VintedStats(
+                                deal_id=deal.id,
+                                nb_listings=new_stats.get("nb_listings", 0),
+                                price_min=new_stats.get("price_min"),
+                                price_max=new_stats.get("price_max"),
+                                price_avg=new_stats.get("price_avg"),
+                                price_median=new_stats.get("price_median"),
+                                price_p25=new_stats.get("price_p25"),
+                                price_p75=new_stats.get("price_p75"),
+                                margin_euro=new_stats.get("margin_euro"),
+                                margin_pct=new_stats.get("margin_percent"),
+                                liquidity_score=new_stats.get("liquidity_score"),
+                                sample_listings=new_stats.get("sample_listings", []),
+                                search_query=new_stats.get("query_used", "")
+                            )
+                            session.add(new_vinted_stats)
+
+                        # Re-score the deal with new stats
+                        deal_data = {
+                            "product_name": deal.title,
+                            "brand": deal.seller_name,
+                            "sale_price": float(deal.price),
+                            "category": deal.category,
+                            "discount_percent": float(deal.discount_percent) if deal.discount_percent else 0,
+                            "sizes_available": deal.sizes_available or [],
+                            "color": deal.color
+                        }
+
+                        new_score = await score_deal(deal_data, new_stats)
+
+                        # Update or create DealScore
+                        existing_score_query = select(DealScore).where(DealScore.deal_id == deal.id)
+                        existing_score_result = await session.execute(existing_score_query)
+                        existing_score = existing_score_result.scalar_one_or_none()
+
+                        if existing_score:
+                            existing_score.flip_score = new_score.get("flip_score", 0)
+                            existing_score.margin_score = new_score.get("margin_score")
+                            existing_score.liquidity_score = new_score.get("liquidity_score")
+                            existing_score.popularity_score = new_score.get("popularity_score")
+                            existing_score.recommended_action = new_score.get("recommended_action", "ignore")
+                            existing_score.recommended_price = new_score.get("recommended_price")
+                            existing_score.confidence = new_score.get("confidence")
+                            existing_score.explanation = new_score.get("explanation")
+                            existing_score.risks = new_score.get("risks", [])
+                            existing_score.estimated_sell_days = new_score.get("estimated_sell_days")
+                            existing_score.updated_at = datetime.utcnow()
+
+                        updated_count += 1
+                        logger.debug(f"✅ Deal {deal.id}: Médiane Vinted = {new_stats.get('price_median')}€")
+
+                except Exception as e:
+                    error_count += 1
+                    logger.error(f"❌ Erreur rescraping deal {deal.id}: {e}")
+
+                # Rate limiting between requests
+                import asyncio
+                await asyncio.sleep(1.5)
+
+            await session.commit()
+            logger.info(f"🎉 Rescraping terminé: {updated_count} deals mis à jour, {error_count} erreurs")
+
+    background_tasks.add_task(rescrape_all_deals)
+
+    return {
+        "status": "started",
+        "message": f"Rescraping Vinted démarré pour {limit} deals",
+        "limit": limit
+    }
+
+
 @router.get("/logs/stats")
 async def get_scraping_logs_stats(
     days: int = 7,

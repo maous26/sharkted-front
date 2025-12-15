@@ -415,6 +415,7 @@ class VintedService:
     ) -> Dict[str, Any]:
         """
         Récupère les statistiques de marché Vinted pour un produit.
+        Combine les articles en vente ET les articles vendus pour des prix plus réalistes.
 
         Args:
             product_name: Nom du produit
@@ -434,18 +435,34 @@ class VintedService:
         price_to = expected_price * 2 if expected_price else None
         price_from = 5  # Minimum 5€ pour filtrer les annonces invalides
 
-        # Rechercher les produits (priorité aux vendus pour avoir de vrais prix)
-        items = await self.search_products(
+        # Rechercher les articles EN VENTE
+        active_items = await self.search_products(
             query=query,
-            limit=settings.VINTED_SEARCH_LIMIT,
+            limit=settings.VINTED_SEARCH_LIMIT // 2,
             price_from=price_from,
-            price_to=price_to
+            price_to=price_to,
+            status="all"
         )
+
+        # Rechercher les articles VENDUS (vrais prix de marché)
+        sold_items = await self.search_products(
+            query=query,
+            limit=settings.VINTED_SEARCH_LIMIT // 2,
+            price_from=price_from,
+            price_to=price_to,
+            status="sold"
+        )
+
+        # Combiner les résultats (priorité aux vendus)
+        items = sold_items + active_items
+        nb_sold = len(sold_items)
+        nb_active = len(active_items)
 
         if not items:
             logger.info(f"Aucun résultat Vinted pour: {query}")
             return {
                 "nb_listings": 0,
+                "nb_sold": 0,
                 "prices": [],
                 "query_used": query
             }
@@ -474,6 +491,8 @@ class VintedService:
         if not prices:
             return {
                 "nb_listings": len(items),
+                "nb_sold": nb_sold,
+                "nb_active": nb_active,
                 "prices": [],
                 "query_used": query
             }
@@ -504,6 +523,8 @@ class VintedService:
 
         stats = {
             "nb_listings": len(items),
+            "nb_sold": nb_sold,
+            "nb_active": nb_active,
             "prices": filtered_prices,
             "query_used": query,
             "price_min": round(min(filtered_prices), 2),
@@ -520,7 +541,7 @@ class VintedService:
             stats["price_std"] = round(statistics.stdev(filtered_prices), 2)
             stats["coefficient_variation"] = round(stats["price_std"] / stats["price_avg"] * 100, 1) if stats["price_avg"] > 0 else 0
 
-        logger.info(f"Vinted stats pour '{query}': {nb_prices} prix, médiane {stats['price_median']}€")
+        logger.info(f"Vinted stats pour '{query}': {nb_prices} prix ({nb_sold} vendus, {nb_active} en vente), médiane {stats['price_median']}€")
 
         return stats
 
