@@ -270,6 +270,7 @@ class User(Base):
     # Relations
     outcomes: Mapped[List["Outcome"]] = relationship("Outcome", back_populates="user")
     alerts: Mapped[List["Alert"]] = relationship("Alert", back_populates="user")
+    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="user")
 
 
 class Outcome(Base):
@@ -407,4 +408,24 @@ class ScrapingLog(Base):
         Index('idx_scraping_logs_source', 'source_slug'),
         Index('idx_scraping_logs_status', 'status'),
         Index('idx_scraping_logs_started', 'started_at'),
+    )
+
+
+class Favorite(Base):
+    """Deals favoris/trackés par les utilisateurs"""
+    __tablename__ = "favorites"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    deal_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("deals.id"), nullable=False)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relations
+    user: Mapped["User"] = relationship("User", back_populates="favorites")
+    deal: Mapped["Deal"] = relationship("Deal")
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'deal_id', name='uq_user_deal_favorite'),
+        Index('idx_favorites_user', 'user_id'),
     )

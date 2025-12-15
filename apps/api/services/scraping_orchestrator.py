@@ -50,11 +50,30 @@ class ScrapingOrchestrator:
             "by_source": {},
         }
 
-        # Get active sources from database or use defaults
+        # Get active sources from database
         if sources:
-            active_sources = sources
+            # If specific sources requested, still check if they are active
+            db_sources_result = await self.db.execute(
+                select(Source).where(Source.slug.in_(sources))
+            )
+            db_sources = {s.slug: s for s in db_sources_result.scalars().all()}
+            active_sources = [s for s in sources if s in db_sources and db_sources[s].is_active]
+
+            # Log disabled sources
+            disabled = [s for s in sources if s not in active_sources]
+            if disabled:
+                logger.info(f"Skipping disabled sources: {disabled}")
         else:
-            active_sources = list(SCRAPERS.keys())
+            # Get only active sources from database
+            db_sources_result = await self.db.execute(
+                select(Source).where(Source.is_active == True)
+            )
+            db_sources = db_sources_result.scalars().all()
+            active_sources = [s.slug for s in db_sources if s.slug in SCRAPERS]
+
+            # If no active sources in DB, use all scrapers (first run)
+            if not active_sources:
+                active_sources = list(SCRAPERS.keys())
 
         # Run scrapers with concurrency limit
         semaphore = asyncio.Semaphore(settings.MAX_CONCURRENT_SCRAPERS)
