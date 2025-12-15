@@ -486,7 +486,7 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         )}
 
         {/* Bouton pour afficher les details du scoring */}
-        {(hasScore || hasStats) && (
+        {hasScore && (
           <button
             onClick={() => setShowDetails(!showDetails)}
             className="w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-2 border-t border-gray-100 transition-colors"
