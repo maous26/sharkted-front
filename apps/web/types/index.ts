@@ -25,13 +25,27 @@ export interface VintedStats {
   nb_listings: number;
   price_min?: number;
   price_max?: number;
+  price_avg?: number;
   price_median?: number;
+  price_p25?: number;
+  price_p75?: number;
   margin_euro?: number;
   margin_pct?: number;
   liquidity_score?: number;
+  coefficient_variation?: number;
+  source_type?: "new" | "mixed" | "none";
+  coefficient?: number;
+  sample_listings?: Array<{
+    title: string;
+    price: number;
+    url: string;
+    photo_url?: string;
+    status?: string;
+  }>;
 }
 
 export interface ScoreBreakdown {
+  discount_score?: number;
   margin_score?: number;
   liquidity_score?: number;
   popularity_score?: number;
@@ -43,16 +57,25 @@ export interface ScoreBreakdown {
 
 export interface DealScore {
   flip_score: number;
+  discount_score?: number;
   margin_score?: number;
   liquidity_score?: number;
   popularity_score?: number;
   score_breakdown?: ScoreBreakdown;
   recommended_action?: "buy" | "watch" | "ignore";
   recommended_price?: number;
+  recommended_price_range?: {
+    aggressive?: number;
+    optimal?: number;
+    patient?: number;
+  };
   confidence?: number;
+  explanation?: string;
   explanation_short?: string;
   risks?: string[];
   estimated_sell_days?: number;
+  model_version?: string;
+  vinted_source_type?: string;
 }
 
 export interface Deal {
@@ -78,7 +101,7 @@ export interface Deal {
 
 export interface DealsListResponse {
   items?: Deal[];
-  deals?: Deal[];  // API returns 'deals' instead of 'items'
+  deals?: Deal[];
   total: number;
   page?: number;
   per_page?: number;

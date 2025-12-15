@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, Eye, Zap } from "lucide-react";
+import { ExternalLink, Eye, Zap, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,8 +28,210 @@ interface DealCardProps {
   compact?: boolean;
 }
 
+// Composant pour afficher les details du scoring
+function ScoringDetails({ deal }: { deal: Deal }) {
+  const hasScore = deal.score && deal.score.flip_score > 0;
+  const hasStats = deal.vinted_stats && deal.vinted_stats.nb_listings > 0;
+  
+  if (!hasScore && !hasStats) return null;
+
+  const marginPct = deal.vinted_stats?.margin_pct || 0;
+  const marginEuro = deal.vinted_stats?.margin_euro || 0;
+  const isPositiveMargin = marginPct > 0;
+
+  return (
+    <div className="mt-4 border-t border-gray-100 pt-4">
+      {/* Score Breakdown */}
+      {hasScore && deal.score?.score_breakdown && (
+        <div className="mb-4">
+          <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 flex items-center gap-1">
+            <Info size={12} />
+            Breakdown du Score
+          </h4>
+          <div className="grid grid-cols-2 gap-2">
+            {deal.score.score_breakdown.discount_score !== undefined && (
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-[10px] text-gray-500">Remise</p>
+                <div className="flex items-center gap-1">
+                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full" 
+                      style={{ width: `${Math.min(deal.score.score_breakdown.discount_score, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium">{deal.score.score_breakdown.discount_score?.toFixed(0)}</span>
+                </div>
+              </div>
+            )}
+            {deal.score.score_breakdown.margin_score !== undefined && (
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-[10px] text-gray-500">Marge</p>
+                <div className="flex items-center gap-1">
+                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className={cn("h-full rounded-full", isPositiveMargin ? "bg-green-500" : "bg-orange-500")}
+                      style={{ width: `${Math.min(deal.score.score_breakdown.margin_score, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium">{deal.score.score_breakdown.margin_score?.toFixed(0)}</span>
+                </div>
+              </div>
+            )}
+            {deal.score.score_breakdown.liquidity_score !== undefined && (
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-[10px] text-gray-500">Liquidité</p>
+                <div className="flex items-center gap-1">
+                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-purple-500 rounded-full" 
+                      style={{ width: `${Math.min(deal.score.score_breakdown.liquidity_score, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium">{deal.score.score_breakdown.liquidity_score?.toFixed(0)}</span>
+                </div>
+              </div>
+            )}
+            {deal.score.score_breakdown.popularity_score !== undefined && (
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-[10px] text-gray-500">Popularité</p>
+                <div className="flex items-center gap-1">
+                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-pink-500 rounded-full" 
+                      style={{ width: `${Math.min(deal.score.score_breakdown.popularity_score, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium">{deal.score.score_breakdown.popularity_score?.toFixed(0)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Marge et prix recommandé */}
+      {hasStats && (
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              {isPositiveMargin ? (
+                <TrendingUp className="w-4 h-4 text-green-600" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-red-500" />
+              )}
+              <span className="text-sm font-semibold">
+                Marge estimée
+              </span>
+            </div>
+            <div className={cn(
+              "text-lg font-bold",
+              isPositiveMargin ? "text-green-600" : "text-red-500"
+            )}>
+              {isPositiveMargin ? "+" : ""}{marginPct.toFixed(1)}%
+              <span className="text-xs ml-1 text-gray-500">
+                ({isPositiveMargin ? "+" : ""}{marginEuro.toFixed(2)}€)
+              </span>
+            </div>
+          </div>
+          
+          {/* Prix de vente recommandé */}
+          {deal.score?.recommended_price && deal.score.recommended_price > 0 && (
+            <div className="flex items-center justify-between text-sm border-t border-gray-200 pt-2 mt-2">
+              <span className="text-gray-600">Prix de vente optimal</span>
+              <span className="font-semibold text-primary-600">
+                {formatPrice(deal.score.recommended_price)}
+              </span>
+            </div>
+          )}
+
+          {/* Fourchette de prix */}
+          {deal.score?.recommended_price_range && (
+            <div className="grid grid-cols-3 gap-2 mt-2 text-center text-xs">
+              {deal.score.recommended_price_range.aggressive && (
+                <div className="bg-white/60 rounded p-1">
+                  <p className="text-gray-500">Rapide</p>
+                  <p className="font-medium">{formatPrice(deal.score.recommended_price_range.aggressive)}</p>
+                </div>
+              )}
+              {deal.score.recommended_price_range.optimal && (
+                <div className="bg-white/60 rounded p-1">
+                  <p className="text-gray-500">Optimal</p>
+                  <p className="font-semibold text-primary-600">{formatPrice(deal.score.recommended_price_range.optimal)}</p>
+                </div>
+              )}
+              {deal.score.recommended_price_range.patient && (
+                <div className="bg-white/60 rounded p-1">
+                  <p className="text-gray-500">Patient</p>
+                  <p className="font-medium">{formatPrice(deal.score.recommended_price_range.patient)}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Source Vinted (neuf vs occasion) */}
+      {deal.vinted_stats?.source_type && (
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xs text-gray-500">Source prix:</span>
+          <span className={cn(
+            "text-xs font-medium px-2 py-0.5 rounded-full",
+            deal.vinted_stats.source_type === "new" 
+              ? "bg-green-100 text-green-700"
+              : deal.vinted_stats.source_type === "mixed"
+              ? "bg-yellow-100 text-yellow-700"
+              : "bg-gray-100 text-gray-600"
+          )}>
+            {deal.vinted_stats.source_type === "new" 
+              ? "Articles neufs" 
+              : deal.vinted_stats.source_type === "mixed"
+              ? "Mix (coef. x1.35)"
+              : "Aucune donnée"}
+          </span>
+          {deal.vinted_stats.coefficient && deal.vinted_stats.coefficient !== 1 && (
+            <span className="text-xs text-gray-400">
+              (×{deal.vinted_stats.coefficient})
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Risques */}
+      {deal.score?.risks && deal.score.risks.length > 0 && (
+        <div className="mb-3">
+          <h4 className="text-xs font-semibold text-orange-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <AlertTriangle size={12} />
+            Risques
+          </h4>
+          <ul className="text-xs text-gray-600 space-y-1">
+            {deal.score.risks.map((risk, idx) => (
+              <li key={idx} className="flex items-start gap-1">
+                <span className="text-orange-400 mt-0.5">•</span>
+                <span>{risk}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Confidence et Model */}
+      <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-2">
+        {deal.score?.confidence && (
+          <span>Confiance: {(deal.score.confidence * 100).toFixed(0)}%</span>
+        )}
+        {deal.score?.model_version && (
+          <span className="bg-gray-100 px-2 py-0.5 rounded text-[10px]">
+            {deal.score.model_version}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function DealCard({ deal, isNew = false }: DealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const { isAuthenticated } = useAuth();
   const { data: favoriteIds = [] } = useFavoriteIds();
   const { toggleFavorite, isLoading: isFavoriteLoading } = useToggleFavorite();
@@ -44,12 +246,20 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
     ? [65, 70, 68, 75, 72, 80, deal.score?.flip_score || 75]
     : [];
 
+  // Couleur de bordure selon la recommandation
+  const borderColor = deal.score?.recommended_action === "buy" 
+    ? "ring-2 ring-green-500" 
+    : deal.score?.recommended_action === "watch"
+    ? "ring-2 ring-yellow-400"
+    : "";
+
   return (
     <Card
       className={cn(
         "overflow-hidden transition-all duration-300 group relative",
         isHovered ? "shadow-xl scale-[1.02]" : "hover:shadow-lg",
-        isNew && "ring-2 ring-green-500 ring-opacity-50"
+        isNew && "ring-2 ring-green-500 ring-opacity-50",
+        !isNew && borderColor
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -59,6 +269,14 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         <div className="absolute top-0 left-0 z-20 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg flex items-center gap-1">
           <Zap size={12} />
           NOUVEAU
+        </div>
+      )}
+
+      {/* Badge BUY en haut si recommandé */}
+      {deal.score?.recommended_action === "buy" && !isNew && (
+        <div className="absolute top-0 left-0 z-20 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-br-lg flex items-center gap-1 animate-pulse">
+          <CheckCircle size={12} />
+          ACHETER
         </div>
       )}
 
@@ -78,7 +296,7 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
-            Pas d'image
+            Pas d image
           </div>
         )}
 
@@ -86,7 +304,7 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
         {/* FlipScore Badge - Top Left */}
-        {hasScore && (
+        {hasScore && !isNew && deal.score?.recommended_action !== "buy" && (
           <div className="absolute top-3 left-3 z-10">
             <div className="bg-white/95 backdrop-blur rounded-xl p-2 shadow-lg">
               <FlipScoreCircle score={deal.score!.flip_score} size="sm" showLabel={false} />
@@ -248,8 +466,31 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
           </div>
         )}
 
+        {/* Bouton pour afficher les details du scoring */}
+        {(hasScore || hasStats) && (
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-2 border-t border-gray-100 transition-colors"
+          >
+            {showDetails ? (
+              <>
+                <ChevronUp size={14} />
+                Masquer les détails
+              </>
+            ) : (
+              <>
+                <ChevronDown size={14} />
+                Voir les détails du scoring
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Scoring Details (collapsible) */}
+        {showDetails && <ScoringDetails deal={deal} />}
+
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-4">
           {isAuthenticated && (
             <Button
               variant="primary"
@@ -281,20 +522,6 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
             {deal.score.explanation_short}
           </p>
         )}
-
-        {/* Risques identifies */}
-        {deal.score?.risks && deal.score.risks.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1 justify-center">
-            {deal.score.risks.slice(0, 3).map((risk, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px]"
-              >
-                {risk}
-              </span>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
@@ -313,7 +540,8 @@ export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
     <div
       className={cn(
         "flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all",
-        isNew && "ring-2 ring-green-500 ring-opacity-50 bg-green-50/50"
+        isNew && "ring-2 ring-green-500 ring-opacity-50 bg-green-50/50",
+        deal.score?.recommended_action === "buy" && "ring-2 ring-green-500 bg-green-50/30"
       )}
     >
       {/* Image */}
@@ -333,6 +561,11 @@ export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
         )}
         {isNew && (
           <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full animate-ping" />
+        )}
+        {deal.score?.recommended_action === "buy" && !isNew && (
+          <div className="absolute top-0 left-0 bg-green-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-br">
+            BUY
+          </div>
         )}
       </div>
 
