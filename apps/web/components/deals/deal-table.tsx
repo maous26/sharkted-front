@@ -18,7 +18,6 @@ import {
   ActionBadge,
   TimeIndicator,
   SourceBadge,
-  LiquidityIndicator,
 } from "@/components/ui/indicators";
 import { Deal } from "@/types";
 import { formatPrice, cn } from "@/lib/utils";
@@ -94,7 +93,7 @@ export function DealTable({ deals, sortBy, sortOrder, onSort }: DealTableProps) 
                 Prix
               </SortableHeader>
             </TableHead>
-            <TableHead>Vinted</TableHead>
+            <TableHead>Revente</TableHead>
             <TableHead>
               <SortableHeader
                 column="margin_pct"
@@ -115,7 +114,7 @@ export function DealTable({ deals, sortBy, sortOrder, onSort }: DealTableProps) 
                 Score
               </SortableHeader>
             </TableHead>
-            <TableHead>Liquidite</TableHead>
+            <TableHead>Marque</TableHead>
             <TableHead>
               <SortableHeader
                 column="detected_at"
@@ -133,7 +132,7 @@ export function DealTable({ deals, sortBy, sortOrder, onSort }: DealTableProps) 
         <TableBody>
           {deals.map((deal, index) => {
             const isNew = index < 2; // First 2 deals considered "new"
-            const hasStats = deal.vinted_stats && deal.vinted_stats.nb_listings > 0;
+            const hasScore = deal.score && deal.score.flip_score > 0;
 
             return (
               <TableRow
@@ -198,28 +197,28 @@ export function DealTable({ deals, sortBy, sortOrder, onSort }: DealTableProps) 
                   </div>
                 </TableCell>
 
-                {/* Vinted */}
+                {/* Prix Revente Estimé */}
                 <TableCell>
-                  {hasStats ? (
+                  {hasScore && deal.score?.recommended_price ? (
                     <div>
                       <p className="font-semibold text-gray-900">
-                        {formatPrice(deal.vinted_stats!.price_median || 0)}
+                        {formatPrice(deal.score.recommended_price)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {deal.vinted_stats!.nb_listings} annonces
+                        ~{deal.score.estimated_sell_days || "?"}j
                       </p>
                     </div>
                   ) : (
-                    <span className="text-gray-400 text-sm">Non analyse</span>
+                    <span className="text-gray-400 text-sm">—</span>
                   )}
                 </TableCell>
 
-                {/* Profit */}
+                {/* Profit Estimé */}
                 <TableCell>
-                  {hasStats && deal.vinted_stats!.margin_pct ? (
+                  {hasScore && deal.score?.score_breakdown?.estimated_margin_pct ? (
                     <ProfitIndicator
-                      marginEuro={deal.vinted_stats!.margin_euro}
-                      marginPct={deal.vinted_stats!.margin_pct}
+                      marginEuro={deal.score.score_breakdown.estimated_margin_euro || 0}
+                      marginPct={deal.score.score_breakdown.estimated_margin_pct}
                       size="md"
                     />
                   ) : (
@@ -240,13 +239,18 @@ export function DealTable({ deals, sortBy, sortOrder, onSort }: DealTableProps) 
                   )}
                 </TableCell>
 
-                {/* Liquidity */}
+                {/* Brand Score (remplace Liquidité) */}
                 <TableCell>
-                  {hasStats ? (
-                    <LiquidityIndicator
-                      score={deal.vinted_stats!.liquidity_score || 50}
-                      size="sm"
-                    />
+                  {hasScore && deal.score?.score_breakdown?.brand_score ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-purple-500 rounded-full"
+                          style={{ width: `${deal.score.score_breakdown.brand_score}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium">{deal.score.score_breakdown.brand_score.toFixed(0)}</span>
+                    </div>
                   ) : (
                     <span className="text-gray-400 text-sm">-</span>
                   )}

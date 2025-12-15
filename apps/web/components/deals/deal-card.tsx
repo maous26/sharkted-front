@@ -31,12 +31,12 @@ interface DealCardProps {
 // Composant pour afficher les details du scoring
 function ScoringDetails({ deal }: { deal: Deal }) {
   const hasScore = deal.score && deal.score.flip_score > 0;
-  const hasStats = deal.vinted_stats && deal.vinted_stats.nb_listings > 0;
-  
-  if (!hasScore && !hasStats) return null;
 
-  const marginPct = deal.vinted_stats?.margin_pct || 0;
-  const marginEuro = deal.vinted_stats?.margin_euro || 0;
+  if (!hasScore) return null;
+
+  // Utilise les marges estimées du score autonome (plus de Vinted)
+  const marginPct = deal.score?.score_breakdown?.estimated_margin_pct || deal.vinted_stats?.margin_pct || 0;
+  const marginEuro = deal.score?.score_breakdown?.estimated_margin_euro || deal.vinted_stats?.margin_euro || 0;
   const isPositiveMargin = marginPct > 0;
 
   return (
@@ -77,17 +77,33 @@ function ScoringDetails({ deal }: { deal: Deal }) {
                 </div>
               </div>
             )}
-            {deal.score.score_breakdown.liquidity_score !== undefined && (
+            {/* Brand Score (remplace Liquidité Vinted) */}
+            {deal.score.score_breakdown.brand_score !== undefined && (
               <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">Liquidité</p>
+                <p className="text-[10px] text-gray-500">Marque</p>
                 <div className="flex items-center gap-1">
                   <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-purple-500 rounded-full" 
-                      style={{ width: `${Math.min(deal.score.score_breakdown.liquidity_score, 100)}%` }}
+                    <div
+                      className="h-full bg-purple-500 rounded-full"
+                      style={{ width: `${Math.min(deal.score.score_breakdown.brand_score, 100)}%` }}
                     />
                   </div>
-                  <span className="text-xs font-medium">{deal.score.score_breakdown.liquidity_score?.toFixed(0)}</span>
+                  <span className="text-xs font-medium">{deal.score.score_breakdown.brand_score?.toFixed(0)}</span>
+                </div>
+              </div>
+            )}
+            {/* Contextual Score */}
+            {deal.score.score_breakdown.contextual_score !== undefined && (
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-[10px] text-gray-500">Contexte</p>
+                <div className="flex items-center gap-1">
+                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-cyan-500 rounded-full"
+                      style={{ width: `${Math.min(deal.score.score_breakdown.contextual_score, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium">{deal.score.score_breakdown.contextual_score?.toFixed(0)}</span>
                 </div>
               </div>
             )}
@@ -109,8 +125,8 @@ function ScoringDetails({ deal }: { deal: Deal }) {
         </div>
       )}
 
-      {/* Marge et prix recommandé */}
-      {hasStats && (
+      {/* Marge et prix recommandé - utilise les marges estimées du scoring autonome */}
+      {(marginPct !== 0 || deal.score?.recommended_price) && (
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 mb-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -170,29 +186,20 @@ function ScoringDetails({ deal }: { deal: Deal }) {
         </div>
       )}
 
-      {/* Source Vinted (neuf vs occasion) */}
-      {deal.vinted_stats?.source_type && (
+      {/* Modèle de scoring */}
+      {deal.score?.model_version && (
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs text-gray-500">Source prix:</span>
+          <span className="text-xs text-gray-500">Scoring:</span>
           <span className={cn(
             "text-xs font-medium px-2 py-0.5 rounded-full",
-            deal.vinted_stats.source_type === "new" 
-              ? "bg-green-100 text-green-700"
-              : deal.vinted_stats.source_type === "mixed"
-              ? "bg-yellow-100 text-yellow-700"
+            deal.score.model_version === "autonomous_v3"
+              ? "bg-blue-100 text-blue-700"
               : "bg-gray-100 text-gray-600"
           )}>
-            {deal.vinted_stats.source_type === "new" 
-              ? "Articles neufs" 
-              : deal.vinted_stats.source_type === "mixed"
-              ? "Mix (coef. x1.35)"
-              : "Aucune donnée"}
+            {deal.score.model_version === "autonomous_v3"
+              ? "Autonome v3"
+              : deal.score.model_version}
           </span>
-          {deal.vinted_stats.coefficient && deal.vinted_stats.coefficient !== 1 && (
-            <span className="text-xs text-gray-400">
-              (×{deal.vinted_stats.coefficient})
-            </span>
-          )}
         </div>
       )}
 
@@ -239,10 +246,11 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
   const dealIdNum = parseInt(deal.id, 10);
   const isFavorite = favoriteIds.includes(dealIdNum);
   const hasScore = deal.score && deal.score.flip_score > 0;
-  const hasStats = deal.vinted_stats && deal.vinted_stats.nb_listings > 0;
+  // Scoring autonome - plus besoin de vinted_stats
+  const hasMarginData = hasScore && (deal.score?.score_breakdown?.estimated_margin_pct !== undefined);
 
-  // Simuler des donnees de tendance pour le sparkline
-  const trendData = hasStats
+  // Données de tendance simulées pour le sparkline
+  const trendData = hasScore
     ? [65, 70, 68, 75, 72, 80, deal.score?.flip_score || 75]
     : [];
 
@@ -382,70 +390,81 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
           )}
         </div>
 
-        {/* Indicateurs de decision */}
-        {hasStats && (
+        {/* Indicateurs de decision - Scoring Autonome */}
+        {hasScore && (
           <div className="space-y-3 mb-4">
-            {/* Profit Indicator */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Profit potentiel</span>
-              <ProfitIndicator
-                marginEuro={deal.vinted_stats!.margin_euro}
-                marginPct={deal.vinted_stats!.margin_pct}
-                size="sm"
-              />
-            </div>
-
-            {/* Liquidite */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Liquidite</span>
-              <LiquidityIndicator
-                score={deal.vinted_stats!.liquidity_score || 50}
-                listings={deal.vinted_stats!.nb_listings}
-                size="sm"
-              />
-            </div>
-
-            {/* Tendance / Popularite */}
-            {hasScore && (
+            {/* Profit Indicator - utilise marge estimée */}
+            {hasMarginData && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Demande</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Profit estimé</span>
+                <ProfitIndicator
+                  marginEuro={deal.score?.score_breakdown?.estimated_margin_euro || 0}
+                  marginPct={deal.score?.score_breakdown?.estimated_margin_pct || 0}
+                  size="sm"
+                />
+              </div>
+            )}
+
+            {/* Score Marque (remplace Liquidité Vinted) */}
+            {deal.score?.score_breakdown?.brand_score !== undefined && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Marque</span>
                 <div className="flex items-center gap-2">
-                  {trendData.length > 0 && (
-                    <Sparkline
-                      data={trendData}
-                      width={50}
-                      height={16}
-                      color={deal.score!.flip_score >= 70 ? "#22c55e" : "#eab308"}
+                  <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-500 rounded-full"
+                      style={{ width: `${deal.score.score_breakdown.brand_score}%` }}
                     />
-                  )}
-                  <PopularityIndicator
-                    score={deal.score!.confidence || 60}
-                    size="sm"
-                  />
+                  </div>
+                  <span className="text-xs font-medium">{deal.score.score_breakdown.brand_score?.toFixed(0)}</span>
                 </div>
               </div>
             )}
+
+            {/* Tendance / Popularite */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Demande</span>
+              <div className="flex items-center gap-2">
+                {trendData.length > 0 && (
+                  <Sparkline
+                    data={trendData}
+                    width={50}
+                    height={16}
+                    color={deal.score!.flip_score >= 70 ? "#22c55e" : "#eab308"}
+                  />
+                )}
+                <PopularityIndicator
+                  score={deal.score!.confidence || 60}
+                  size="sm"
+                />
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Stats Vinted compactes */}
-        {hasStats && (
+        {/* Stats Scoring Autonome */}
+        {hasScore && (
           <div className="bg-gray-50 rounded-lg p-3 mb-4">
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
-                <p className="text-[10px] text-gray-500 uppercase">Prix Vinted</p>
+                <p className="text-[10px] text-gray-500 uppercase">Prix revente</p>
                 <p className="text-sm font-bold text-gray-900">
-                  {formatPrice(deal.vinted_stats!.price_median || 0)}
+                  {deal.score?.recommended_price ? formatPrice(deal.score.recommended_price) : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase">Annonces</p>
-                <p className="text-sm font-bold text-gray-900">
-                  {deal.vinted_stats!.nb_listings}
+                <p className="text-[10px] text-gray-500 uppercase">Marge</p>
+                <p className={cn(
+                  "text-sm font-bold",
+                  (deal.score?.score_breakdown?.estimated_margin_pct || 0) >= 0 ? "text-green-600" : "text-red-500"
+                )}>
+                  {deal.score?.score_breakdown?.estimated_margin_pct
+                    ? `${deal.score.score_breakdown.estimated_margin_pct.toFixed(0)}%`
+                    : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase">Delai vente</p>
+                <p className="text-[10px] text-gray-500 uppercase">Délai vente</p>
                 <p className="text-sm font-bold text-gray-900">
                   ~{deal.score?.estimated_sell_days || "?"}j
                 </p>
@@ -585,8 +604,8 @@ export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
           <span className="text-lg font-bold text-gray-900">
             {formatPrice(deal.sale_price)}
           </span>
-          {deal.vinted_stats?.margin_pct && (
-            <ProfitIndicator marginPct={deal.vinted_stats.margin_pct} size="sm" />
+          {deal.score?.score_breakdown?.estimated_margin_pct && (
+            <ProfitIndicator marginPct={deal.score.score_breakdown.estimated_margin_pct} size="sm" />
           )}
           <TimeIndicator date={deal.detected_at} size="sm" />
         </div>
