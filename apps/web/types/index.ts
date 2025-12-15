@@ -53,6 +53,12 @@ export interface ScoreBreakdown {
   size_bonus?: number;
   brand_bonus?: number;
   discount_bonus?: number;
+  // Scoring autonome v3
+  brand_score?: number;
+  contextual_score?: number;
+  estimated_margin_euro?: number;
+  estimated_margin_pct?: number;
+  margin_bonus?: number;
 }
 
 export interface DealScore {
