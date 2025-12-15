@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, Heart, Zap } from "lucide-react";
+import { ExternalLink, ShoppingCart, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -126,18 +126,19 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
           </Link>
           {isAuthenticated && (
             <Button
-              variant="ghost"
+              variant="primary"
               size="sm"
               className={cn(
                 "shadow-lg h-9 w-9 p-0 transition-colors",
                 isFavorite
-                  ? "bg-red-500 hover:bg-red-600 text-white"
-                  : "bg-white/90 text-gray-900 hover:bg-white hover:text-red-500"
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-green-500 hover:bg-green-600 text-white"
               )}
               onClick={() => toggleFavorite(dealIdNum)}
               disabled={isFavoriteLoading}
+              title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
             >
-              <Heart size={16} className={cn(isFavorite && "fill-current")} />
+              <ShoppingCart size={16} />
             </Button>
           )}
         </div>
@@ -364,12 +365,13 @@ export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
             size="sm"
             className={cn(
               "h-9 w-9 p-0 transition-colors",
-              isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-500"
+              isFavorite ? "text-green-600 bg-green-50" : "text-gray-400 hover:text-green-500"
             )}
             onClick={() => toggleFavorite(dealIdNum)}
             disabled={isFavoriteLoading}
+            title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
           >
-            <Heart size={18} className={cn(isFavorite && "fill-current")} />
+            <ShoppingCart size={18} />
           </Button>
         )}
         <Link href={deal.product_url} target="_blank">
