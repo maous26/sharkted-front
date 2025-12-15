@@ -39,6 +39,7 @@ import { LiveDot } from "@/components/ui/indicators";
 import { useAuth } from "@/hooks/use-auth";
 
 import { ProxyManager } from "@/components/admin/ProxyManager";
+import { UserManager } from "@/components/admin/UserManager";
 interface ScrapingSource {
   id: string;
   name: string;
@@ -917,6 +918,32 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Users Management */}
+        <Card>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Users size={18} className="text-orange-500" />
+              Utilisateurs & Abonnements
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <UserManager />
+          </CardContent>
+        </Card>
+
+        {/* Proxies Management */}
+        <Card>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Network size={18} className="text-purple-500" />
+              Proxies & Web Unlocker
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <ProxyManager />
           </CardContent>
         </Card>
 
