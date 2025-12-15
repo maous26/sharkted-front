@@ -201,6 +201,26 @@ export const adminApi = {
 };
 
 // ============================================================================
+// FAVORITES API
+// ============================================================================
+export const favoritesApi = {
+  list: (userId: string | number, params?: { page?: number; per_page?: number }) =>
+    api.get("/v1/favorites", { params: { user_id: userId, ...params } }),
+
+  add: (userId: string | number, dealId: string | number, notes?: string) =>
+    api.post(`/v1/favorites?user_id=${userId}`, { deal_id: dealId, notes }),
+
+  remove: (userId: string | number, dealId: string | number) =>
+    api.delete(`/v1/favorites/${dealId}?user_id=${userId}`),
+
+  check: (userId: string | number, dealId: string | number) =>
+    api.get(`/v1/favorites/check/${dealId}?user_id=${userId}`),
+
+  getIds: (userId: string | number) =>
+    api.get(`/v1/favorites/ids?user_id=${userId}`),
+};
+
+// ============================================================================
 // USER API
 // ============================================================================
 export const userApi = {

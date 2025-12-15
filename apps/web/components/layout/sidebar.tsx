@@ -8,6 +8,7 @@ import {
   ShoppingBag,
   BarChart3,
   Bell,
+  Heart,
   Settings,
   LogOut,
   TrendingUp,
@@ -37,6 +38,11 @@ const navItems = [
     label: "Alertes",
     href: "/dashboard/alerts",
     icon: Bell,
+  },
+  {
+    label: "Favoris",
+    href: "/dashboard/favorites",
+    icon: Heart,
   },
   {
     label: "Parametres",

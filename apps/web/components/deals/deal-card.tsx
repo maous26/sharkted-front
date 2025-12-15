@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, ShoppingCart, Zap } from "lucide-react";
+import { ExternalLink, Heart, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/indicators";
 import { Deal } from "@/types";
 import { formatPrice, cn } from "@/lib/utils";
+import { useFavoriteIds, useToggleFavorite } from "@/hooks/use-favorites";
+import { useAuth } from "@/hooks/use-auth";
 
 interface DealCardProps {
   deal: Deal;
@@ -28,6 +30,12 @@ interface DealCardProps {
 
 export function DealCard({ deal, isNew = false }: DealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const { data: favoriteIds = [] } = useFavoriteIds();
+  const { toggleFavorite, isLoading: isFavoriteLoading } = useToggleFavorite();
+
+  const dealIdNum = parseInt(deal.id, 10);
+  const isFavorite = favoriteIds.includes(dealIdNum);
   const hasScore = deal.score && deal.score.flip_score > 0;
   const hasStats = deal.vinted_stats && deal.vinted_stats.nb_listings > 0;
 
@@ -116,14 +124,22 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
               <ExternalLink size={16} />
             </Button>
           </Link>
-          <Button
-            variant="primary"
-            size="sm"
-            className="bg-green-500 hover:bg-green-600 text-white shadow-lg h-9 w-9 p-0"
-            onClick={() => onTrack?.(deal)}
-          >
-            <ShoppingCart size={16} />
-          </Button>
+          {isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "shadow-lg h-9 w-9 p-0 transition-colors",
+                isFavorite
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-white/90 text-gray-900 hover:bg-white hover:text-red-500"
+              )}
+              onClick={() => toggleFavorite(dealIdNum)}
+              disabled={isFavoriteLoading}
+            >
+              <Heart size={16} className={cn(isFavorite && "fill-current")} />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -283,6 +299,13 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
 
 // Version compacte pour le feed temps reel
 export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
+  const { isAuthenticated } = useAuth();
+  const { data: favoriteIds = [] } = useFavoriteIds();
+  const { toggleFavorite, isLoading: isFavoriteLoading } = useToggleFavorite();
+
+  const dealIdNum = parseInt(deal.id, 10);
+  const isFavorite = favoriteIds.includes(dealIdNum);
+
   return (
     <div
       className={cn(
@@ -334,11 +357,27 @@ export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
       </div>
 
       {/* Actions */}
-      <Link href={deal.product_url} target="_blank" className="flex-shrink-0">
-        <Button variant="ghost" size="sm">
-          <ExternalLink size={18} />
-        </Button>
-      </Link>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {isAuthenticated && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-9 w-9 p-0 transition-colors",
+              isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-500"
+            )}
+            onClick={() => toggleFavorite(dealIdNum)}
+            disabled={isFavoriteLoading}
+          >
+            <Heart size={18} className={cn(isFavorite && "fill-current")} />
+          </Button>
+        )}
+        <Link href={deal.product_url} target="_blank">
+          <Button variant="ghost" size="sm">
+            <ExternalLink size={18} />
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }
