@@ -12,7 +12,7 @@ from loguru import logger
 
 from config import settings
 from database import engine, Base, get_db
-from routers import deals, users, alerts, analytics, scraping, ai
+from routers import deals, users, alerts, analytics, scraping, ai, favorites
 from services.scheduler import start_scheduler, stop_scheduler
 
 # Lifecycle management
@@ -70,13 +70,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(deals.router, prefix="/api/deals", tags=["Deals"])
-app.include_router(users.router, prefix="/api/users", tags=["Users"])
-app.include_router(alerts.router, prefix="/api/alerts", tags=["Alerts"])
-app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
-app.include_router(scraping.router, prefix="/api/scraping", tags=["Scraping"])
-app.include_router(ai.router, prefix="/api/ai", tags=["AI Analysis"])
+# Include routers with /v1 prefix (as expected by frontend)
+app.include_router(deals.router, prefix="/v1/deals", tags=["Deals"])
+app.include_router(users.router, prefix="/v1/users", tags=["Users"])
+app.include_router(alerts.router, prefix="/v1/alerts", tags=["Alerts"])
+app.include_router(analytics.router, prefix="/v1/analytics", tags=["Analytics"])
+app.include_router(scraping.router, prefix="/v1/scraping", tags=["Scraping"])
+app.include_router(scraping.router, prefix="/v1/sources", tags=["Sources"])  # Alias for frontend
+app.include_router(ai.router, prefix="/v1/ai", tags=["AI Analysis"])
+app.include_router(favorites.router, prefix="/v1/favorites", tags=["Favorites"])
 
 # Health check
 @app.get("/health", tags=["System"])

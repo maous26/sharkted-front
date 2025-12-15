@@ -110,6 +110,8 @@ export default function AdminPage() {
   const [logsPage, setLogsPage] = useState(1);
   const [isDeletingLog, setIsDeletingLog] = useState<string | null>(null);
   const [isDeletingOldLogs, setIsDeletingOldLogs] = useState(false);
+  const [isRescrapingVinted, setIsRescrapingVinted] = useState(false);
+  const [vintedRescrapeLimit, setVintedRescrapeLimit] = useState(50);
 
   // Check authentication and authorization
   const isAdmin = user?.plan === "PRO" || user?.plan === "AGENCY" || user?.plan === "pro" || user?.plan === "agency" || user?.email === "admin@sharkted.fr";
@@ -401,6 +403,26 @@ export default function AdminPage() {
       setTimeout(() => setScrapingMessage(null), 5000);
     } finally {
       setIsDeletingOldLogs(false);
+    }
+  };
+
+  const handleRescrapeVinted = async () => {
+    setIsRescrapingVinted(true);
+    try {
+      const { data } = await scrapingApi.rescrapeVintedStats(vintedRescrapeLimit);
+      setScrapingMessage({
+        type: "success",
+        text: data.message || "Rescraping Vinted lance en arriere-plan",
+      });
+      setTimeout(() => setScrapingMessage(null), 5000);
+    } catch (error) {
+      setScrapingMessage({
+        type: "error",
+        text: "Erreur lors du lancement du rescraping Vinted",
+      });
+      setTimeout(() => setScrapingMessage(null), 5000);
+    } finally {
+      setIsRescrapingVinted(false);
     }
   };
 
@@ -1302,6 +1324,57 @@ export default function AdminPage() {
                   ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Vinted Rescrape */}
+        <Card className="border-orange-200">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-orange-600 text-base sm:text-lg">
+              <RefreshCw size={18} />
+              Rescraper Stats Vinted
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-4">
+            <p className="text-sm text-gray-600">
+              Recalcule les statistiques Vinted (prix median, marge, liquidite) pour les deals existants avec les nouveaux filtres ameliores.
+            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 whitespace-nowrap">Nombre de deals:</label>
+                <select
+                  value={vintedRescrapeLimit}
+                  onChange={(e) => setVintedRescrapeLimit(Number(e.target.value))}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                </select>
+              </div>
+              <Button
+                onClick={handleRescrapeVinted}
+                disabled={isRescrapingVinted}
+                className="gap-2 bg-orange-500 hover:bg-orange-600"
+                size="sm"
+              >
+                {isRescrapingVinted ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    Lancement...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={14} />
+                    Lancer le rescraping
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500">
+              Le rescraping s&apos;execute en arriere-plan. Chaque deal prend ~1.5s pour eviter le rate limiting.
+            </p>
           </CardContent>
         </Card>
 

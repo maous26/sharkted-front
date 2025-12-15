@@ -130,6 +130,10 @@ export const scrapingApi = {
 
   deleteLogs: (params: { older_than_days: number }) =>
     api.delete("/v1/sources/logs", { params }),
+
+  // Rescrape Vinted stats for existing deals
+  rescrapeVintedStats: (limit: number = 100) =>
+    api.post("/v1/scraping/rescrape-vinted-stats", null, { params: { limit } }),
 };
 
 // ============================================================================
