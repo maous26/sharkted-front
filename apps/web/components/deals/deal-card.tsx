@@ -16,8 +16,27 @@ import {
   SourceBadge,
   Sparkline,
   ScoreBreakdown,
-} from "@/components/ui/indicators";
-import { Deal } from "@/types";
+import { DealProfitInfo } from "./deal-profit-info";
+
+// ... existing imports
+
+// Inside DealCard function
+{/* FlipScore Badge - Top Left */ }
+{
+  hasScore && !isNew && deal.score?.recommended_action !== "buy" && (
+    <div className="absolute top-3 left-3 z-10">
+      <div className="bg-white/95 backdrop-blur rounded-xl p-2 shadow-lg flex flex-col items-center gap-1">
+        <FlipScoreCircle score={deal.score!.flip_score} size="sm" showLabel={false} />
+        {/* Petit badge Vérifié si Vinted Data */}
+        {deal.vinted_stats && (
+          <span className="text-[8px] bg-green-100 text-green-700 px-1 rounded font-bold uppercase tracking-tighter">
+            Vérifié
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
 import { formatPrice, cn, proxyImageUrl } from "@/lib/utils";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/use-favorites";
 import { useAuth } from "@/hooks/use-auth";
@@ -54,8 +73,8 @@ function ScoringDetails({ deal }: { deal: Deal }) {
                 <p className="text-[10px] text-gray-500">Remise</p>
                 <div className="flex items-center gap-1">
                   <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-500 rounded-full" 
+                    <div
+                      className="h-full bg-blue-500 rounded-full"
                       style={{ width: `${Math.min(deal.score.score_breakdown.discount_score, 100)}%` }}
                     />
                   </div>
@@ -68,7 +87,7 @@ function ScoringDetails({ deal }: { deal: Deal }) {
                 <p className="text-[10px] text-gray-500">Marge</p>
                 <div className="flex items-center gap-1">
                   <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={cn("h-full rounded-full", isPositiveMargin ? "bg-green-500" : "bg-orange-500")}
                       style={{ width: `${Math.min(deal.score.score_breakdown.margin_score, 100)}%` }}
                     />
@@ -112,8 +131,8 @@ function ScoringDetails({ deal }: { deal: Deal }) {
                 <p className="text-[10px] text-gray-500">Popularité</p>
                 <div className="flex items-center gap-1">
                   <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-pink-500 rounded-full" 
+                    <div
+                      className="h-full bg-pink-500 rounded-full"
                       style={{ width: `${Math.min(deal.score.score_breakdown.popularity_score, 100)}%` }}
                     />
                   </div>
@@ -149,7 +168,7 @@ function ScoringDetails({ deal }: { deal: Deal }) {
               </span>
             </div>
           </div>
-          
+
           {/* Prix de vente recommandé */}
           {deal.score?.recommended_price && deal.score.recommended_price > 0 && (
             <div className="flex items-center justify-between text-sm border-t border-gray-200 pt-2 mt-2">
@@ -255,11 +274,11 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
     : [];
 
   // Couleur de bordure selon la recommandation
-  const borderColor = deal.score?.recommended_action === "buy" 
-    ? "ring-2 ring-green-500" 
+  const borderColor = deal.score?.recommended_action === "buy"
+    ? "ring-2 ring-green-500"
     : deal.score?.recommended_action === "watch"
-    ? "ring-2 ring-yellow-400"
-    : "";
+      ? "ring-2 ring-yellow-400"
+      : "";
 
   return (
     <Card

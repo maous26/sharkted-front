@@ -35,7 +35,7 @@ export interface VintedStats {
   coefficient_variation?: number;
   source_type?: "new" | "mixed" | "none";
   coefficient?: number;
-  sample_listings?: Array<{
+  sample_listings?: number[] | Array<{
     title: string;
     price: number;
     url: string;
