@@ -124,6 +124,15 @@ async def list_deals(
         .where(Deal.status == DealStatus.ACTIVE)
     )
 
+    # Apply user category filter from preferences
+    # If user has categories selected, only show those categories
+    # If no categories selected, show all deals
+    if user and user.preferences:
+        user_categories = user.preferences.get("categories", [])
+        if user_categories and len(user_categories) > 0:
+            # Filter deals to only include user's selected categories
+            query = query.where(Deal.category.in_(user_categories))
+
     # Apply filters
     if brand:
         query = query.where(Deal.brand.ilike(f"%{brand}%"))
@@ -397,6 +406,7 @@ async def get_top_recommended_deals(
     limit: int = Query(10, ge=1, le=50),
     category: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user_optional),
 ):
     """Get top recommended deals by FlipScore."""
 
@@ -411,6 +421,12 @@ async def get_top_recommended_deals(
         .outerjoin(DealScore)
         .where(Deal.status == DealStatus.ACTIVE)
     )
+
+    # Apply user category filter from preferences
+    if user and user.preferences:
+        user_categories = user.preferences.get("categories", [])
+        if user_categories and len(user_categories) > 0:
+            query = query.where(Deal.category.in_(user_categories))
 
     if category:
         query = query.where(Deal.category == category)
