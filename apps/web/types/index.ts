@@ -148,6 +148,7 @@ export interface Alert {
 }
 
 export interface DashboardStats {
+  active_deals: number;
   total_deals: number;
   deals_today: number;
   avg_flip_score: number;
