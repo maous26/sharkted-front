@@ -401,17 +401,12 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         {/* Indicateurs de decision - Scoring Autonome */}
         {hasScore && (
           <div className="space-y-3 mb-4">
-            {/* Profit Indicator - utilise marge estimée */}
-            {hasMarginData && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Profit estimé</span>
-                <ProfitIndicator
-                  marginEuro={deal.score?.score_breakdown?.estimated_margin_euro || 0}
-                  marginPct={deal.score?.score_breakdown?.estimated_margin_pct || 0}
-                  size="sm"
-                />
-              </div>
-            )}
+            {/* Profit & Market Info (Vinted vs Estimated) */}
+            <div className="mb-2">
+              <DealProfitInfo deal={deal} />
+            </div>
+
+            {/* Separator if needed, but DealProfitInfo includes its own box */}
 
             {/* Score Marque (remplace Liquidité Vinted) */}
             {deal.score?.score_breakdown?.brand_score !== undefined && (
