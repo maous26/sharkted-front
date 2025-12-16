@@ -1,5 +1,6 @@
-import { Deal } from "@/types";
-import { cn } from "@/lib/utils";
+import React from "react";
+import { Deal } from "../../types";
+import { cn } from "../../lib/utils";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 
 interface DealProfitInfoProps {
