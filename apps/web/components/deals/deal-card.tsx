@@ -16,6 +16,7 @@ import {
   SourceBadge,
   Sparkline,
   ScoreBreakdown,
+} from "@/components/ui/indicators";
 import { DealProfitInfo } from "./deal-profit-info";
 
 // ... existing imports
