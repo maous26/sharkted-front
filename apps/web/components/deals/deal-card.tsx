@@ -21,23 +21,7 @@ import { DealProfitInfo } from "./deal-profit-info";
 
 // ... existing imports
 
-// Inside DealCard function
-{/* FlipScore Badge - Top Left */ }
-{
-  hasScore && !isNew && deal.score?.recommended_action !== "buy" && (
-    <div className="absolute top-3 left-3 z-10">
-      <div className="bg-white/95 backdrop-blur rounded-xl p-2 shadow-lg flex flex-col items-center gap-1">
-        <FlipScoreCircle score={deal.score!.flip_score} size="sm" showLabel={false} />
-        {/* Petit badge Vérifié si Vinted Data */}
-        {deal.vinted_stats && (
-          <span className="text-[8px] bg-green-100 text-green-700 px-1 rounded font-bold uppercase tracking-tighter">
-            Vérifié
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
+
 import { formatPrice, cn, proxyImageUrl } from "@/lib/utils";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/use-favorites";
 import { useAuth } from "@/hooks/use-auth";
@@ -334,8 +318,14 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         {/* FlipScore Badge - Top Left */}
         {hasScore && !isNew && deal.score?.recommended_action !== "buy" && (
           <div className="absolute top-3 left-3 z-10">
-            <div className="bg-white/95 backdrop-blur rounded-xl p-2 shadow-lg">
+            <div className="bg-white/95 backdrop-blur rounded-xl p-2 shadow-lg flex flex-col items-center gap-1">
               <FlipScoreCircle score={deal.score!.flip_score} size="sm" showLabel={false} />
+              {/* Petit badge Vérifié si Vinted Data */}
+              {deal.vinted_stats && (
+                <span className="text-[8px] bg-green-100 text-green-700 px-1 rounded font-bold uppercase tracking-tighter">
+                  Vérifié
+                </span>
+              )}
             </div>
           </div>
         )}
