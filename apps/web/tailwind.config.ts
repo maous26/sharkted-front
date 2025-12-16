@@ -54,6 +54,7 @@ const config: Config = {
         "number-pop": "number-pop 0.3s ease-out",
         "live-pulse": "live-pulse 2s ease-in-out infinite",
         "urgency-flash": "urgency-flash 1s ease-in-out infinite",
+        "gradient-x": "gradient-x 3s ease infinite",
       },
       keyframes: {
         "bounce-soft": {
@@ -108,6 +109,16 @@ const config: Config = {
         "urgency-flash": {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.4" },
+        },
+        "gradient-x": {
+          "0%, 100%": {
+            "background-size": "200% 200%",
+            "background-position": "left center",
+          },
+          "50%": {
+            "background-size": "200% 200%",
+            "background-position": "right center",
+          },
         },
       },
       transitionTimingFunction: {
