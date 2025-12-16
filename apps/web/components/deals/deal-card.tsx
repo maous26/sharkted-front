@@ -19,12 +19,10 @@ import {
 } from "@/components/ui/indicators";
 import { DealProfitInfo } from "./deal-profit-info";
 
-// ... existing imports
-
-
 import { formatPrice, cn, proxyImageUrl } from "@/lib/utils";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/use-favorites";
 import { useAuth } from "@/hooks/use-auth";
+import { Deal } from "@/types";
 
 interface DealCardProps {
   deal: Deal;
