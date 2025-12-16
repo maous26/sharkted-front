@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Bell, User, Info, TrendingUp, Clock, BarChart3, AlertTriangle, ShoppingBag, Check } from "lucide-react";
+import { Save, Bell, User, Info, TrendingUp, Clock, BarChart3, AlertTriangle, ShoppingBag, Check, Lock } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,19 @@ const PRODUCT_CATEGORIES = [
   { id: "lunettes", label: "Lunettes", icon: "🕶️" },
   { id: "chaussures", label: "Chaussures", icon: "👞" },
 ];
+
+// Max categories by plan (champ libre compte comme 1)
+const MAX_CATEGORIES_BY_PLAN: Record<string, number> = {
+  basic: 1, // Seulement sneakers
+  premium: 3,
+  pro: 3,
+  owner: 99,
+};
+
+// Check if user has basic plan (sneakers only)
+const isBasicPlan = (plan: string | undefined) => {
+  return !plan || plan === "free" || plan === "freemium" || plan === "basic";
+};
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
@@ -60,20 +73,52 @@ export default function SettingsPage() {
     loadPreferences();
   }, []);
 
+  // Get max categories for current plan
+  const userPlan = user?.plan?.toLowerCase() || "basic";
+  const maxCategories = MAX_CATEGORIES_BY_PLAN[userPlan] || 3;
+  const isBasic = isBasicPlan(user?.plan);
+
+  // Count current selections (champ libre compte comme 1)
+  const currentCount = selectedCategories.filter(c => c !== "autre").length + (showOtherInput ? 1 : 0);
+  const canAddMore = currentCount < maxCategories;
+
   const toggleCategory = (categoryId: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((c) => c !== categoryId)
-        : [...prev, categoryId]
-    );
+    // Basic plan: only sneakers allowed
+    if (isBasic && categoryId !== "sneakers") {
+      return;
+    }
+
+    setSelectedCategories((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((c) => c !== categoryId);
+      } else {
+        // Check if can add more
+        const newCount = prev.filter(c => c !== "autre").length + 1 + (showOtherInput ? 1 : 0);
+        if (newCount > maxCategories) {
+          return prev;
+        }
+        return [...prev, categoryId];
+      }
+    });
   };
 
   const toggleOther = () => {
-    setShowOtherInput(!showOtherInput);
+    // Basic plan: no custom categories
+    if (isBasic) {
+      return;
+    }
+
     if (showOtherInput) {
+      setShowOtherInput(false);
       setSelectedCategories((prev) => prev.filter((c) => c !== "autre"));
       setOtherCategories("");
     } else {
+      // Check if can add more
+      const newCount = selectedCategories.filter(c => c !== "autre").length + 1;
+      if (newCount > maxCategories) {
+        return;
+      }
+      setShowOtherInput(true);
       setSelectedCategories((prev) => [...prev, "autre"]);
     }
   };
@@ -230,22 +275,46 @@ export default function SettingsPage() {
               <div>
                 <CardTitle>Categories de produits</CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
-                  Selectionnez les categories qui vous interessent pour le scraping et les alertes
+                  {isBasic ? (
+                    <>Abonnement Basic : uniquement les <strong>Sneakers</strong></>
+                  ) : (
+                    <>Selectionnez jusqu'a <strong>{maxCategories} categories</strong> (champ libre inclus)</>
+                  )}
                 </p>
               </div>
             </div>
           </CardHeader>
           <CardContent>
+            {/* Category count indicator */}
+            {!isBasic && (
+              <div className="mb-4 flex items-center gap-2">
+                <div className={`text-sm font-medium ${currentCount >= maxCategories ? 'text-orange-600' : 'text-gray-600'}`}>
+                  {currentCount} / {maxCategories} categories selectionnees
+                </div>
+                {currentCount >= maxCategories && (
+                  <span className="text-xs text-orange-500">(limite atteinte)</span>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
               {PRODUCT_CATEGORIES.map((category) => {
                 const isSelected = selectedCategories.includes(category.id);
+                const isLocked = isBasic && category.id !== "sneakers";
+                const isDisabled = isLocked || (!isSelected && !canAddMore);
+
                 return (
                   <button
                     key={category.id}
                     onClick={() => toggleCategory(category.id)}
+                    disabled={isDisabled && !isSelected}
                     className={`relative flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
                       isSelected
                         ? "border-purple-500 bg-purple-50 text-purple-700"
+                        : isLocked
+                        ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
+                        : isDisabled
+                        ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
                         : "border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/50"
                     }`}
                   >
@@ -254,6 +323,9 @@ export default function SettingsPage() {
                     {isSelected && (
                       <Check className="absolute top-1 right-1 text-purple-500" size={14} />
                     )}
+                    {isLocked && (
+                      <Lock className="absolute top-1 right-1 text-gray-400" size={12} />
+                    )}
                   </button>
                 );
               })}
@@ -261,9 +333,14 @@ export default function SettingsPage() {
               {/* Other category button */}
               <button
                 onClick={toggleOther}
+                disabled={isBasic || (!showOtherInput && !canAddMore)}
                 className={`relative flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
                   showOtherInput
                     ? "border-purple-500 bg-purple-50 text-purple-700"
+                    : isBasic
+                    ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
+                    : !canAddMore
+                    ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
                     : "border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/50"
                 }`}
               >
@@ -271,6 +348,9 @@ export default function SettingsPage() {
                 <span className="text-sm font-medium">Autre</span>
                 {showOtherInput && (
                   <Check className="absolute top-1 right-1 text-purple-500" size={14} />
+                )}
+                {isBasic && (
+                  <Lock className="absolute top-1 right-1 text-gray-400" size={12} />
                 )}
               </button>
             </div>
@@ -301,6 +381,18 @@ export default function SettingsPage() {
                   <strong>{selectedCategories.filter(c => c !== "autre").length}</strong> categorie(s) selectionnee(s)
                   {otherCategories && ` + autres: ${otherCategories}`}
                 </p>
+              </div>
+            )}
+
+            {/* Upgrade message for basic users */}
+            {isBasic && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                <Lock className="text-amber-500 flex-shrink-0 mt-0.5" size={16} />
+                <div>
+                  <p className="text-sm text-amber-700">
+                    <strong>Passez a Premium</strong> pour acceder a toutes les categories (sacs, montres, vetements...) et choisir jusqu'a 3 categories.
+                  </p>
+                </div>
               </div>
             )}
 
