@@ -208,7 +208,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <CheckCircle size={18} className="text-heading mt-0.5 shrink-0" />
-                  <span className="text-gray-300">1 "Top Deal" (>70 Score) / jour</span>
+                  <span className="text-gray-300">1 "Top Deal" (&gt;70 Score) / jour</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm opacity-50">
                   <Lock size={18} className="text-gray-600 mt-0.5 shrink-0" />
