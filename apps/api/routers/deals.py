@@ -102,7 +102,7 @@ async def list_deals(
     brand: Optional[str] = None,
     category: Optional[str] = None,
     source: Optional[str] = None,
-    min_score: Optional[float] = Query(None, ge=0, le=100),
+    min_score: Optional[float] = Query(60, ge=0, le=100),
     min_margin: Optional[float] = None,
     max_price: Optional[float] = None,
     recommended_only: bool = False,

@@ -76,13 +76,25 @@ async def get_dashboard_stats(
     avg_score_result = await db.execute(avg_score_query)
     avg_flip_score = avg_score_result.scalar() or 0
 
-    # Top deals count (score >= 70)
+    # Active deals (Score >= 60)
+    active_query = (
+        select(func.count(Deal.id))
+        .join(DealScore)
+        .where(and_(
+            Deal.status == DealStatus.ACTIVE,
+            DealScore.flip_score >= 60
+        ))
+    )
+    active_result = await db.execute(active_query)
+    active_deals = active_result.scalar() or 0
+
+    # Top deals count (score >= 80 for top deals section)
     top_query = (
         select(func.count(Deal.id))
         .join(DealScore)
         .where(and_(
             Deal.status == DealStatus.ACTIVE,
-            DealScore.flip_score >= 70
+            DealScore.flip_score >= 80
         ))
     )
     top_result = await db.execute(top_query)
@@ -99,6 +111,7 @@ async def get_dashboard_stats(
     last_scan = last_scan_result.scalar()
 
     return {
+        "active_deals": active_deals,
         "total_deals": total_deals,
         "deals_today": deals_today,
         "avg_flip_score": round(avg_flip_score, 1) if avg_flip_score else 0,
