@@ -50,7 +50,7 @@ class UserPreferences(BaseModel):
 
 class UserResponse(BaseModel):
     """User response schema."""
-    id: UUID
+    id: int
     email: str
     name: Optional[str]
     plan: str
