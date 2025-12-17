@@ -30,7 +30,7 @@ const brands = [
 
 const sortOptions = [
   { value: "detected_at", label: "Plus recents" },
-  { value: "flip_score", label: "Meilleur score" },
+  { value: "flip_score", label: "Meilleur SharkScore" },
   { value: "margin_pct", label: "Meilleure marge" },
   { value: "sale_price_asc", label: "Prix croissant" },
   { value: "sale_price_desc", label: "Prix decroissant" },
@@ -194,7 +194,7 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
         {/* Min Score */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Score minimum
+            SharkScore minimum
           </label>
           <div className="flex gap-2">
             {scorePresets.map((preset) => (

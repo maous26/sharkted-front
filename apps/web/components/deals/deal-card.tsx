@@ -7,7 +7,7 @@ import { ExternalLink, Eye, Zap, TrendingUp, TrendingDown, AlertTriangle, CheckC
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  FlipScoreCircle,
+  SharkScoreCircle,
   ProfitIndicator,
   PopularityIndicator,
   LiquidityIndicator,
@@ -313,11 +313,11 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-        {/* FlipScore Badge - Top Left */}
+        {/* SharkScore Badge - Top Left */}
         {hasScore && !isNew && deal.score?.recommended_action !== "buy" && (
           <div className="absolute top-3 left-3 z-10">
             <div className="bg-white/95 backdrop-blur rounded-xl p-2 shadow-lg flex flex-col items-center gap-1">
-              <FlipScoreCircle score={deal.score!.flip_score} size="sm" showLabel={false} />
+              <SharkScoreCircle score={deal.score!.flip_score} size="sm" showLabel={false} />
               {/* Petit badge Vérifié si Vinted Data */}
               {deal.vinted_stats && (
                 <span className="text-[8px] bg-green-100 text-green-700 px-1 rounded font-bold uppercase tracking-tighter">

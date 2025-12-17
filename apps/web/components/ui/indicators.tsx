@@ -351,8 +351,8 @@ export function LiquidityIndicator({
   );
 }
 
-// FlipScore circulaire
-interface FlipScoreCircleProps {
+// SharkScore circulaire
+interface SharkScoreCircleProps {
   score: number;
   size?: "sm" | "md" | "lg" | "xl";
   showLabel?: boolean;
@@ -360,13 +360,13 @@ interface FlipScoreCircleProps {
   glowOnHigh?: boolean;
 }
 
-export function FlipScoreCircle({
+export function SharkScoreCircle({
   score,
   size = "md",
   showLabel = true,
   animated = true,
   glowOnHigh = true,
-}: FlipScoreCircleProps) {
+}: SharkScoreCircleProps) {
   const getColor = () => {
     if (score >= 80) return { stroke: "#22c55e", text: "text-green-500", label: "Excellent", glow: "shadow-green-500/50" };
     if (score >= 60) return { stroke: "#eab308", text: "text-yellow-500", label: "Bon", glow: "shadow-yellow-500/50" };

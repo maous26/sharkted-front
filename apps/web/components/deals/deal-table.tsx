@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
-  FlipScoreCircle,
+  SharkScoreCircle,
   ProfitIndicator,
   ActionBadge,
   TimeIndicator,
@@ -229,7 +229,7 @@ export function DealTable({ deals, sortBy, sortOrder, onSort }: DealTableProps) 
                 {/* Score */}
                 <TableCell>
                   {deal.score ? (
-                    <FlipScoreCircle
+                    <SharkScoreCircle
                       score={deal.score.flip_score}
                       size="sm"
                       showLabel={false}

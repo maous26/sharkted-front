@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DealCard, DealCardCompact } from "@/components/deals/deal-card";
 import {
-  FlipScoreCircle,
+  SharkScoreCircle,
   DeltaIndicator,
   Sparkline,
   LiveDot,
