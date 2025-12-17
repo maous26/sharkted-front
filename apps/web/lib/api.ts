@@ -80,6 +80,8 @@ export const dealsApi = {
     min_margin?: number;
     max_price?: number;
     recommended_only?: boolean;
+    vinted_verified?: boolean;
+    has_estimated_margin?: boolean;
     sort_by?: string;
     sort_order?: string;
     search?: string;

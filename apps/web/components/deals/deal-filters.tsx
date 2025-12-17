@@ -62,6 +62,8 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     max_price: "",
     sort_by: "detected_at",
     recommended_only: false,
+    vinted_verified: false,
+    has_estimated_margin: false,
   });
 
   // Handle ESC key to close mobile drawer
@@ -107,6 +109,8 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     if (newFilters.min_margin) apiFilters.min_margin = newFilters.min_margin;
     if (newFilters.max_price) apiFilters.max_price = Number(newFilters.max_price);
     if (newFilters.recommended_only) apiFilters.recommended_only = true;
+    if (newFilters.vinted_verified) apiFilters.vinted_verified = true;
+    if (newFilters.has_estimated_margin) apiFilters.has_estimated_margin = true;
     if (newFilters.search) apiFilters.search = newFilters.search;
 
     onFiltersChange(apiFilters);
@@ -127,6 +131,8 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
       max_price: "",
       sort_by: "detected_at",
       recommended_only: false,
+      vinted_verified: false,
+      has_estimated_margin: false,
     };
     setFilters(defaultFilters);
     setSearchQuery("");
@@ -140,6 +146,8 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     filters.min_margin > 0,
     filters.max_price,
     filters.recommended_only,
+    filters.vinted_verified,
+    filters.has_estimated_margin,
     searchQuery,
   ].filter(Boolean).length;
 
@@ -318,6 +326,36 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
             <span className="sm:hidden">Acheter</span>
           </button>
 
+          {/* Vinted Verified Toggle */}
+          <button
+            onClick={() => handleChange("vinted_verified", !filters.vinted_verified)}
+            className={cn(
+              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex-shrink-0 whitespace-nowrap",
+              filters.vinted_verified
+                ? "bg-blue-500 border-blue-500 text-white"
+                : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+            )}
+          >
+            {filters.vinted_verified && <Check size={14} />}
+            <span className="hidden sm:inline">Marche verifie</span>
+            <span className="sm:hidden">Verifie</span>
+          </button>
+
+          {/* Has Estimated Margin Toggle */}
+          <button
+            onClick={() => handleChange("has_estimated_margin", !filters.has_estimated_margin)}
+            className={cn(
+              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex-shrink-0 whitespace-nowrap",
+              filters.has_estimated_margin
+                ? "bg-purple-500 border-purple-500 text-white"
+                : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+            )}
+          >
+            {filters.has_estimated_margin && <Check size={14} />}
+            <span className="hidden sm:inline">Marge estimee</span>
+            <span className="sm:hidden">Marge</span>
+          </button>
+
           {/* More Filters Toggle - Opens drawer on mobile */}
           <button
             onClick={() => {
@@ -436,6 +474,18 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
             <FilterChip
               label={`<${filters.max_price}€`}
               onRemove={() => handleChange("max_price", "")}
+            />
+          )}
+          {filters.vinted_verified && (
+            <FilterChip
+              label="Marche verifie"
+              onRemove={() => handleChange("vinted_verified", false)}
+            />
+          )}
+          {filters.has_estimated_margin && (
+            <FilterChip
+              label="Marge estimee"
+              onRemove={() => handleChange("has_estimated_margin", false)}
             />
           )}
           {searchQuery && (
