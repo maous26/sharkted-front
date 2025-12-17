@@ -13,6 +13,11 @@ from .bstn_scraper import BstnScraper
 from .snipes_scraper import SnipesScraper
 from .yoox_scraper import YooxScraper
 from .laredoute_scraper import LaRedouteScraper
+# New textile scrapers
+from .kith_scraper import KithScraper
+from .printemps_scraper import PrintempsScraper
+# Brand utilities
+from .premium_brands import is_attractive_brand, get_brand_tier, normalize_brand_name, ATTRACTIVE_BRANDS
 
 # Registry of available scrapers - FREE tier
 SCRAPERS_FREE = {
@@ -32,6 +37,9 @@ SCRAPERS_PRO = {
     "snipes": SnipesScraper,
     "yoox": YooxScraper,
     "laredoute": LaRedouteScraper,
+    # New textile sources
+    "kith": KithScraper,
+    "printemps": PrintempsScraper,
 }
 
 # All scrapers combined
@@ -54,6 +62,14 @@ __all__ = [
     "SnipesScraper",
     "YooxScraper",
     "LaRedouteScraper",
+    # New textile scrapers
+    "KithScraper",
+    "PrintempsScraper",
+    # Brand utilities
+    "is_attractive_brand",
+    "get_brand_tier",
+    "normalize_brand_name",
+    "ATTRACTIVE_BRANDS",
     # Registries
     "SCRAPERS",
     "SCRAPERS_FREE",

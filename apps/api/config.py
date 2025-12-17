@@ -172,6 +172,23 @@ SCRAPING_SOURCES = {
         "priority": 2,
         "categories": ["textile", "sneakers"],
         "plan_required": "pro"
+    },
+    # === NEW TEXTILE SOURCES ===
+    "kith": {
+        "name": "Kith",
+        "base_url": "https://eu.kith.com/collections/sale",
+        "enabled": True,
+        "priority": 1,
+        "categories": ["textile", "sneakers", "accessoires"],
+        "plan_required": "pro"
+    },
+    "printemps": {
+        "name": "Printemps",
+        "base_url": "https://www.printemps.com/fr/fr/soldes",
+        "enabled": True,
+        "priority": 1,
+        "categories": ["textile", "sneakers", "accessoires"],
+        "plan_required": "pro"
     }
 }
 
@@ -211,24 +228,56 @@ CATEGORY_WEIGHTS = {
 
 # Marques et leur tier de popularité
 BRAND_TIERS = {
-    # Tier S - Très haute demande
-    "nike": {"tier": "S", "popularity_bonus": 1.2},
-    "jordan": {"tier": "S", "popularity_bonus": 1.25},
-    "adidas": {"tier": "S", "popularity_bonus": 1.15},
-    
-    # Tier A - Haute demande
+    # Tier S - Très haute demande (streetwear hype + luxe)
+    "nike": {"tier": "S", "popularity_bonus": 1.25},
+    "jordan": {"tier": "S", "popularity_bonus": 1.3},
+    "adidas": {"tier": "S", "popularity_bonus": 1.2},
+    "supreme": {"tier": "S", "popularity_bonus": 1.3},
+    "off-white": {"tier": "S", "popularity_bonus": 1.25},
+    "stone island": {"tier": "S", "popularity_bonus": 1.25},
+    "moncler": {"tier": "S", "popularity_bonus": 1.2},
+    "fear of god": {"tier": "S", "popularity_bonus": 1.2},
+    "essentials": {"tier": "S", "popularity_bonus": 1.15},
+    "the north face": {"tier": "S", "popularity_bonus": 1.15},
+    "canada goose": {"tier": "S", "popularity_bonus": 1.15},
+    "arc'teryx": {"tier": "S", "popularity_bonus": 1.15},
+
+    # Tier A - Haute demande (premium accessible + streetwear classique)
     "ralph lauren": {"tier": "A", "popularity_bonus": 1.1},
-    "new balance": {"tier": "A", "popularity_bonus": 1.1},
-    "asics": {"tier": "A", "popularity_bonus": 1.05},
-    "lacoste": {"tier": "A", "popularity_bonus": 1.05},
-    
+    "new balance": {"tier": "A", "popularity_bonus": 1.15},
+    "asics": {"tier": "A", "popularity_bonus": 1.1},
+    "lacoste": {"tier": "A", "popularity_bonus": 1.1},
+    "stussy": {"tier": "A", "popularity_bonus": 1.1},
+    "carhartt wip": {"tier": "A", "popularity_bonus": 1.1},
+    "champion": {"tier": "A", "popularity_bonus": 1.05},
+    "kith": {"tier": "A", "popularity_bonus": 1.1},
+    "palace": {"tier": "A", "popularity_bonus": 1.1},
+    "hugo boss": {"tier": "A", "popularity_bonus": 1.05},
+    "calvin klein": {"tier": "A", "popularity_bonus": 1.05},
+    "ami paris": {"tier": "A", "popularity_bonus": 1.1},
+    "a.p.c.": {"tier": "A", "popularity_bonus": 1.1},
+    "sandro": {"tier": "A", "popularity_bonus": 1.05},
+    "kenzo": {"tier": "A", "popularity_bonus": 1.1},
+    "salomon": {"tier": "A", "popularity_bonus": 1.1},
+    "hoka": {"tier": "A", "popularity_bonus": 1.05},
+
     # Tier B - Demande moyenne
     "puma": {"tier": "B", "popularity_bonus": 1.0},
     "reebok": {"tier": "B", "popularity_bonus": 1.0},
     "tommy hilfiger": {"tier": "B", "popularity_bonus": 1.0},
     "converse": {"tier": "B", "popularity_bonus": 1.0},
-    
+    "vans": {"tier": "B", "popularity_bonus": 1.0},
+    "dickies": {"tier": "B", "popularity_bonus": 0.95},
+    "levi's": {"tier": "B", "popularity_bonus": 1.0},
+    "fred perry": {"tier": "B", "popularity_bonus": 1.0},
+    "patagonia": {"tier": "B", "popularity_bonus": 1.0},
+    "diesel": {"tier": "B", "popularity_bonus": 0.95},
+    "armani": {"tier": "B", "popularity_bonus": 1.0},
+
     # Tier C - Demande plus faible
     "fila": {"tier": "C", "popularity_bonus": 0.9},
     "le coq sportif": {"tier": "C", "popularity_bonus": 0.9},
+    "umbro": {"tier": "C", "popularity_bonus": 0.85},
+    "kappa": {"tier": "C", "popularity_bonus": 0.85},
+    "ellipse": {"tier": "C", "popularity_bonus": 0.85},
 }
