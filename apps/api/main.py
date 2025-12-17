@@ -21,9 +21,11 @@ async def lifespan(app: FastAPI):
     """Gestion du cycle de vie de l'application"""
     logger.info("🦈 Démarrage de Sellshark API...")
     
-    # Création des tables si elles n'existent pas
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Note: Les tables sont gérées par Alembic
+    # Le create_all est désactivé pour éviter les conflits de migration
+    # async with engine.begin() as conn:
+    #     await conn.run_sync(Base.metadata.create_all)
+    pass
     
     # Démarrage du scheduler de scraping
     await start_scheduler()
