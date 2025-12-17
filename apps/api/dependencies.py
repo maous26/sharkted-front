@@ -32,10 +32,12 @@ async def get_current_user(
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        user_id_str: str = payload.get("sub")
+        if user_id_str is None:
             raise credentials_exception
-    except JWTError:
+        # Convert to int since User.id is an integer
+        user_id = int(user_id_str)
+    except (JWTError, ValueError):
         raise credentials_exception
 
     result = await db.execute(select(User).where(User.id == user_id))
@@ -69,10 +71,12 @@ async def get_current_user_optional(
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        user_id_str: str = payload.get("sub")
+        if user_id_str is None:
             return None
-    except JWTError:
+        # Convert to int since User.id is an integer
+        user_id = int(user_id_str)
+    except (JWTError, ValueError):
         return None
 
     result = await db.execute(select(User).where(User.id == user_id))

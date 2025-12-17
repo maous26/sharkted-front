@@ -1,7 +1,6 @@
 """Deals router - endpoints for deal management."""
 from typing import List, Optional
 from datetime import datetime, timedelta
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,11 +8,8 @@ from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel, Field
 
-from database import get_db, DealStatus
-from models import Deal, VintedStats, DealScore, Source, User
+from database import get_db, Deal, VintedStats, DealScore, User
 from dependencies import get_current_user, get_current_user_optional
-from services.ai_service import ai_service
-from services.vinted_service import get_vinted_stats_for_deal
 
 router = APIRouter()
 
@@ -21,26 +17,16 @@ router = APIRouter()
 # Pydantic schemas
 class VintedStatsResponse(BaseModel):
     """Vinted stats response schema."""
-    nb_listings: int
-    price_min: Optional[float]
-    price_max: Optional[float]
-    price_median: Optional[float]
-    margin_euro: Optional[float]
-    margin_pct: Optional[float]
-    liquidity_score: Optional[float]
+    nb_listings: Optional[int] = 0
+    price_min: Optional[float] = None
+    price_max: Optional[float] = None
+    price_median: Optional[float] = None
+    margin_euro: Optional[float] = None
+    margin_pct: Optional[float] = None
+    liquidity_score: Optional[float] = None
 
     class Config:
         from_attributes = True
-
-
-class ScoreBreakdownResponse(BaseModel):
-    """Score breakdown details."""
-    margin_contribution: Optional[float] = None
-    liquidity_contribution: Optional[float] = None
-    popularity_contribution: Optional[float] = None
-    size_bonus: Optional[float] = None
-    brand_bonus: Optional[float] = None
-    discount_bonus: Optional[float] = None
 
 
 class DealScoreResponse(BaseModel):
@@ -49,13 +35,12 @@ class DealScoreResponse(BaseModel):
     margin_score: Optional[float] = None
     liquidity_score: Optional[float] = None
     popularity_score: Optional[float] = None
-    score_breakdown: Optional[ScoreBreakdownResponse] = None
-    recommended_action: Optional[str]
-    recommended_price: Optional[float]
-    confidence: Optional[float]
-    explanation_short: Optional[str]
-    risks: Optional[List[str]]
-    estimated_sell_days: Optional[int]
+    recommended_action: Optional[str] = None
+    recommended_price: Optional[float] = None
+    confidence: Optional[float] = None
+    explanation_short: Optional[str] = None
+    risks: Optional[List[str]] = None
+    estimated_sell_days: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -63,24 +48,24 @@ class DealScoreResponse(BaseModel):
 
 class DealResponse(BaseModel):
     """Deal response schema."""
-    id: UUID
-    product_name: str
-    brand: Optional[str]
-    model: Optional[str]
-    category: Optional[str]
-    color: Optional[str]
-    gender: Optional[str]
-    original_price: Optional[float]
-    sale_price: float
-    discount_pct: Optional[float]
-    product_url: str
-    image_url: Optional[str]
-    sizes_available: Optional[List[str]]
-    stock_available: bool
-    source_name: Optional[str]
-    detected_at: datetime
-    vinted_stats: Optional[VintedStatsResponse]
-    score: Optional[DealScoreResponse]
+    id: int
+    title: str
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    category: Optional[str] = None
+    color: Optional[str] = None
+    gender: Optional[str] = None
+    original_price: Optional[float] = None
+    price: float
+    discount_pct: Optional[float] = None
+    url: str
+    image_url: Optional[str] = None
+    sizes_available: Optional[List[str]] = None
+    in_stock: bool = True
+    source: str
+    first_seen_at: datetime
+    vinted_stats: Optional[VintedStatsResponse] = None
+    score: Optional[DealScoreResponse] = None
 
     class Config:
         from_attributes = True
@@ -95,6 +80,65 @@ class DealsListResponse(BaseModel):
     pages: int
 
 
+def deal_to_response(deal: Deal) -> DealResponse:
+    """Convert Deal model to response schema."""
+    # Handle sizes_available - can be dict/list from JSONB
+    sizes = None
+    if deal.sizes_available:
+        if isinstance(deal.sizes_available, dict):
+            sizes = list(deal.sizes_available.keys()) if deal.sizes_available else None
+        elif isinstance(deal.sizes_available, list):
+            sizes = deal.sizes_available
+
+    # Handle risks - can be dict/list from JSONB
+    risks = None
+    if deal.deal_score and deal.deal_score.risks:
+        if isinstance(deal.deal_score.risks, dict):
+            risks = list(deal.deal_score.risks.values()) if deal.deal_score.risks else None
+        elif isinstance(deal.deal_score.risks, list):
+            risks = deal.deal_score.risks
+
+    return DealResponse(
+        id=deal.id,
+        title=deal.title,
+        brand=deal.brand,
+        model=deal.model,
+        category=deal.category,
+        color=deal.color,
+        gender=deal.gender,
+        original_price=float(deal.original_price) if deal.original_price else None,
+        price=float(deal.price),
+        discount_pct=float(deal.discount_percent) if deal.discount_percent else None,
+        url=deal.url,
+        image_url=deal.image_url,
+        sizes_available=sizes,
+        in_stock=deal.in_stock,
+        source=deal.source,
+        first_seen_at=deal.first_seen_at,
+        vinted_stats=VintedStatsResponse(
+            nb_listings=deal.vinted_stats.nb_listings or 0,
+            price_min=float(deal.vinted_stats.price_min) if deal.vinted_stats.price_min else None,
+            price_max=float(deal.vinted_stats.price_max) if deal.vinted_stats.price_max else None,
+            price_median=float(deal.vinted_stats.price_median) if deal.vinted_stats.price_median else None,
+            margin_euro=float(deal.vinted_stats.margin_euro) if deal.vinted_stats.margin_euro else None,
+            margin_pct=float(deal.vinted_stats.margin_pct) if deal.vinted_stats.margin_pct else None,
+            liquidity_score=float(deal.vinted_stats.liquidity_score) if deal.vinted_stats.liquidity_score else None,
+        ) if deal.vinted_stats else None,
+        score=DealScoreResponse(
+            flip_score=float(deal.deal_score.flip_score),
+            margin_score=float(deal.deal_score.margin_score) if deal.deal_score.margin_score else None,
+            liquidity_score=float(deal.deal_score.liquidity_score) if deal.deal_score.liquidity_score else None,
+            popularity_score=float(deal.deal_score.popularity_score) if deal.deal_score.popularity_score else None,
+            recommended_action=deal.deal_score.recommended_action,
+            recommended_price=float(deal.deal_score.recommended_price) if deal.deal_score.recommended_price else None,
+            confidence=float(deal.deal_score.confidence) if deal.deal_score.confidence else None,
+            explanation_short=deal.deal_score.explanation_short,
+            risks=risks,
+            estimated_sell_days=deal.deal_score.estimated_sell_days,
+        ) if deal.deal_score else None,
+    )
+
+
 @router.get("", response_model=DealsListResponse)
 async def list_deals(
     page: int = Query(1, ge=1),
@@ -102,35 +146,41 @@ async def list_deals(
     brand: Optional[str] = None,
     category: Optional[str] = None,
     source: Optional[str] = None,
-    min_score: Optional[float] = Query(60, ge=0, le=100),
+    min_score: Optional[float] = Query(None, ge=0, le=100),
     min_margin: Optional[float] = None,
     max_price: Optional[float] = None,
     recommended_only: bool = False,
-    sort_by: str = Query("detected_at", regex="^(detected_at|flip_score|margin_pct|sale_price)$"),
+    sort_by: str = Query("first_seen_at", regex="^(first_seen_at|flip_score|margin_pct|price)$"),
     sort_order: str = Query("desc", regex="^(asc|desc)$"),
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_current_user_optional),
 ):
     """List deals with filters and pagination."""
 
-    # Base query with joins
+    # Determine which joins are needed upfront to avoid duplicates
+    needs_score_join = min_score is not None or recommended_only or sort_by == "flip_score"
+    needs_vinted_join = min_margin is not None or sort_by == "margin_pct"
+
+    # Base query with eager loading
     query = (
         select(Deal)
         .options(
-            selectinload(Deal.source),
             selectinload(Deal.vinted_stats),
-            selectinload(Deal.score),
+            selectinload(Deal.deal_score),
         )
-        .where(Deal.status == DealStatus.ACTIVE)
+        .where(Deal.in_stock == True)
     )
 
+    # Add joins once (outer joins to allow deals without scores/stats)
+    if needs_score_join:
+        query = query.outerjoin(DealScore, Deal.id == DealScore.deal_id)
+    if needs_vinted_join:
+        query = query.outerjoin(VintedStats, Deal.id == VintedStats.deal_id)
+
     # Apply user category filter from preferences
-    # If user has categories selected, only show those categories
-    # If no categories selected, show all deals
     if user and user.preferences:
         user_categories = user.preferences.get("categories", [])
         if user_categories and len(user_categories) > 0:
-            # Filter deals to only include user's selected categories
             query = query.where(Deal.category.in_(user_categories))
 
     # Apply filters
@@ -141,36 +191,40 @@ async def list_deals(
         query = query.where(Deal.category == category)
 
     if source:
-        query = query.join(Source).where(Source.name == source)
+        query = query.where(Deal.source == source)
 
     if max_price:
-        query = query.where(Deal.sale_price <= max_price)
+        query = query.where(Deal.price <= max_price)
 
-    if min_score:
-        query = query.join(DealScore).where(DealScore.flip_score >= min_score)
+    if min_score is not None:
+        query = query.where(DealScore.flip_score >= min_score)
 
-    if min_margin:
-        query = query.join(VintedStats).where(VintedStats.margin_pct >= min_margin)
+    if min_margin is not None:
+        query = query.where(VintedStats.margin_pct >= min_margin)
 
     if recommended_only:
-        query = query.join(DealScore, isouter=True).where(DealScore.recommended_action == "buy")
+        query = query.where(DealScore.recommended_action == "buy")
 
     # Count total
     count_query = select(func.count()).select_from(query.subquery())
     total_result = await db.execute(count_query)
-    total = total_result.scalar()
+    total = total_result.scalar() or 0
 
     # Apply sorting
     if sort_by == "flip_score":
-        query = query.join(DealScore, isouter=True)
+        # Need to join DealScore if not already joined
+        if not needs_score_join:
+            query = query.outerjoin(DealScore, Deal.id == DealScore.deal_id)
         order_col = DealScore.flip_score
     elif sort_by == "margin_pct":
-        query = query.join(VintedStats, isouter=True)
+        # Need to join VintedStats if not already joined
+        if not needs_vinted_join:
+            query = query.outerjoin(VintedStats, Deal.id == VintedStats.deal_id)
         order_col = VintedStats.margin_pct
-    elif sort_by == "sale_price":
-        order_col = Deal.sale_price
+    elif sort_by == "price":
+        order_col = Deal.price
     else:
-        order_col = Deal.detected_at
+        order_col = Deal.first_seen_at
 
     if sort_order == "desc":
         query = query.order_by(order_col.desc().nullslast())
@@ -186,62 +240,75 @@ async def list_deals(
     deals = result.scalars().unique().all()
 
     # Transform to response
-    items = []
-    for deal in deals:
-        item = DealResponse(
-            id=deal.id,
-            product_name=deal.product_name,
-            brand=deal.brand,
-            model=deal.model,
-            category=deal.category,
-            color=deal.color,
-            gender=deal.gender,
-            original_price=float(deal.original_price) if deal.original_price else None,
-            sale_price=float(deal.sale_price),
-            discount_pct=float(deal.discount_percent) if deal.discount_percent else None,
-            product_url=deal.product_url,
-            image_url=deal.image_url,
-            sizes_available=deal.sizes_available,
-            stock_available=deal.stock_available,
-            source_name=deal.source.name if deal.source else None,
-            detected_at=deal.detected_at,
-            vinted_stats=VintedStatsResponse(
-                nb_listings=deal.vinted_stats.nb_listings,
-                price_min=float(deal.vinted_stats.price_min) if deal.vinted_stats.price_min else None,
-                price_max=float(deal.vinted_stats.price_max) if deal.vinted_stats.price_max else None,
-                price_median=float(deal.vinted_stats.price_median) if deal.vinted_stats.price_median else None,
-                margin_euro=float(deal.vinted_stats.margin_euro) if deal.vinted_stats.margin_euro else None,
-                margin_pct=float(deal.vinted_stats.margin_percent) if deal.vinted_stats.margin_percent else None,
-                liquidity_score=float(deal.vinted_stats.liquidity_score) if deal.vinted_stats.liquidity_score else None,
-            ) if deal.vinted_stats else None,
-            score=DealScoreResponse(
-                flip_score=float(deal.score.flip_score),
-                margin_score=float(deal.score.margin_score) if deal.score.margin_score else None,
-                liquidity_score=float(deal.score.liquidity_score) if deal.score.liquidity_score else None,
-                popularity_score=float(deal.score.popularity_score) if deal.score.popularity_score else None,
-                score_breakdown=ScoreBreakdownResponse(**deal.score.score_breakdown) if deal.score.score_breakdown else None,
-                recommended_action=deal.score.recommended_action,
-                recommended_price=float(deal.score.recommended_price) if deal.score.recommended_price else None,
-                confidence=float(deal.score.confidence) if deal.score.confidence else None,
-                explanation_short=deal.score.explanation_short,
-                risks=deal.score.risks,
-                estimated_sell_days=deal.score.estimated_sell_days,
-            ) if deal.score else None,
-        )
-        items.append(item)
+    items = [deal_to_response(deal) for deal in deals]
 
     return DealsListResponse(
         items=items,
         total=total,
         page=page,
         per_page=per_page,
-        pages=(total + per_page - 1) // per_page,
+        pages=(total + per_page - 1) // per_page if total > 0 else 0,
     )
+
+
+@router.get("/stats/summary")
+async def get_deals_stats(
+    db: AsyncSession = Depends(get_db),
+):
+    """Get deals statistics summary."""
+
+    # Total active deals
+    total_query = select(func.count(Deal.id)).where(Deal.in_stock == True)
+    total_result = await db.execute(total_query)
+    total_active = total_result.scalar() or 0
+
+    # Deals with good score (>= 70)
+    good_score_query = (
+        select(func.count(Deal.id))
+        .join(DealScore, Deal.id == DealScore.deal_id)
+        .where(and_(Deal.in_stock == True, DealScore.flip_score >= 70))
+    )
+    good_score_result = await db.execute(good_score_query)
+    good_deals = good_score_result.scalar() or 0
+
+    # New deals (last 24h)
+    yesterday = datetime.utcnow() - timedelta(hours=24)
+    new_query = select(func.count(Deal.id)).where(
+        and_(Deal.in_stock == True, Deal.first_seen_at >= yesterday)
+    )
+    new_result = await db.execute(new_query)
+    new_deals = new_result.scalar() or 0
+
+    # By source
+    source_query = (
+        select(Deal.source, func.count(Deal.id))
+        .where(Deal.in_stock == True)
+        .group_by(Deal.source)
+    )
+    source_result = await db.execute(source_query)
+    by_source = {row[0]: row[1] for row in source_result.fetchall()}
+
+    # By category
+    category_query = (
+        select(Deal.category, func.count(Deal.id))
+        .where(Deal.in_stock == True)
+        .group_by(Deal.category)
+    )
+    category_result = await db.execute(category_query)
+    by_category = {row[0] or "other": row[1] for row in category_result.fetchall()}
+
+    return {
+        "total_active": total_active,
+        "good_deals": good_deals,
+        "new_last_24h": new_deals,
+        "by_source": by_source,
+        "by_category": by_category,
+    }
 
 
 @router.get("/{deal_id}", response_model=DealResponse)
 async def get_deal(
-    deal_id: UUID,
+    deal_id: int,
     db: AsyncSession = Depends(get_db),
 ):
     """Get a single deal by ID."""
@@ -249,9 +316,8 @@ async def get_deal(
     result = await db.execute(
         select(Deal)
         .options(
-            selectinload(Deal.source),
             selectinload(Deal.vinted_stats),
-            selectinload(Deal.score),
+            selectinload(Deal.deal_score),
         )
         .where(Deal.id == deal_id)
     )
@@ -263,142 +329,7 @@ async def get_deal(
             detail="Deal not found",
         )
 
-    return DealResponse(
-        id=deal.id,
-        product_name=deal.product_name,
-        brand=deal.brand,
-        model=deal.model,
-        category=deal.category,
-        color=deal.color,
-        gender=deal.gender,
-        original_price=float(deal.original_price) if deal.original_price else None,
-        sale_price=float(deal.sale_price),
-        discount_pct=float(deal.discount_percent) if deal.discount_percent else None,
-        product_url=deal.product_url,
-        image_url=deal.image_url,
-        sizes_available=deal.sizes_available,
-        stock_available=deal.stock_available,
-        source_name=deal.source.name if deal.source else None,
-        detected_at=deal.detected_at,
-        vinted_stats=VintedStatsResponse(
-            nb_listings=deal.vinted_stats.nb_listings,
-            price_min=float(deal.vinted_stats.price_min) if deal.vinted_stats.price_min else None,
-            price_max=float(deal.vinted_stats.price_max) if deal.vinted_stats.price_max else None,
-            price_median=float(deal.vinted_stats.price_median) if deal.vinted_stats.price_median else None,
-            margin_euro=float(deal.vinted_stats.margin_euro) if deal.vinted_stats.margin_euro else None,
-            margin_pct=float(deal.vinted_stats.margin_percent) if deal.vinted_stats.margin_percent else None,
-            liquidity_score=float(deal.vinted_stats.liquidity_score) if deal.vinted_stats.liquidity_score else None,
-        ) if deal.vinted_stats else None,
-        score=DealScoreResponse(
-            flip_score=float(deal.score.flip_score),
-            margin_score=float(deal.score.margin_score) if deal.score.margin_score else None,
-            liquidity_score=float(deal.score.liquidity_score) if deal.score.liquidity_score else None,
-            popularity_score=float(deal.score.popularity_score) if deal.score.popularity_score else None,
-            score_breakdown=ScoreBreakdownResponse(**deal.score.score_breakdown) if deal.score.score_breakdown else None,
-            recommended_action=deal.score.recommended_action,
-            recommended_price=float(deal.score.recommended_price) if deal.score.recommended_price else None,
-            confidence=float(deal.score.confidence) if deal.score.confidence else None,
-            explanation_short=deal.score.explanation_short,
-            risks=deal.score.risks,
-            estimated_sell_days=deal.score.estimated_sell_days,
-        ) if deal.score else None,
-    )
-
-
-@router.get("/{deal_id}/ai-analysis")
-async def get_deal_ai_analysis(
-    deal_id: UUID,
-    refresh_vinted: bool = Query(False, description="Force refresh Vinted data"),
-    include_llm: bool = Query(True, description="Include LLM-powered explanation"),
-    db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional),
-):
-    """
-    Get full AI analysis for a deal.
-
-    Returns detailed FlipScore breakdown, LLM explanation, risks, opportunities, and tips.
-    """
-
-    # Get deal
-    result = await db.execute(
-        select(Deal)
-        .options(
-            selectinload(Deal.source),
-            selectinload(Deal.vinted_stats),
-            selectinload(Deal.score),
-        )
-        .where(Deal.id == deal_id)
-    )
-    deal = result.scalar_one_or_none()
-
-    if not deal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Deal not found",
-        )
-
-    # Get Vinted stats (refresh or use cached)
-    if refresh_vinted or not deal.vinted_stats:
-        vinted_stats = await get_vinted_stats_for_deal(
-            product_name=deal.product_name,
-            brand=deal.brand,
-            sale_price=float(deal.sale_price),
-            category=deal.category
-        )
-    else:
-        vinted_stats = {
-            "nb_listings": deal.vinted_stats.nb_listings,
-            "price_min": float(deal.vinted_stats.price_min) if deal.vinted_stats.price_min else None,
-            "price_max": float(deal.vinted_stats.price_max) if deal.vinted_stats.price_max else None,
-            "price_median": float(deal.vinted_stats.price_median) if deal.vinted_stats.price_median else None,
-            "price_p25": float(deal.vinted_stats.price_p25) if deal.vinted_stats.price_p25 else None,
-            "price_p75": float(deal.vinted_stats.price_p75) if deal.vinted_stats.price_p75 else None,
-            "margin_euro": float(deal.vinted_stats.margin_euro) if deal.vinted_stats.margin_euro else 0,
-            "margin_percent": float(deal.vinted_stats.margin_percent) if deal.vinted_stats.margin_percent else 0,
-            "liquidity_score": float(deal.vinted_stats.liquidity_score) if deal.vinted_stats.liquidity_score else 0,
-        }
-
-    # Build deal data
-    deal_data = {
-        "product_name": deal.product_name,
-        "brand": deal.brand,
-        "model": deal.model,
-        "sale_price": float(deal.sale_price),
-        "original_price": float(deal.original_price) if deal.original_price else None,
-        "discount_percent": float(deal.discount_percent) if deal.discount_percent else 0,
-        "category": deal.category,
-        "color": deal.color,
-        "gender": deal.gender,
-        "sizes_available": deal.sizes_available,
-        "product_url": deal.product_url,
-        "image_url": deal.image_url,
-        "source_name": deal.source.name if deal.source else None,
-    }
-
-    # User preferences
-    user_preferences = None
-    if current_user and current_user.preferences:
-        user_preferences = {
-            "min_margin": current_user.preferences.get("min_margin", 20),
-            "categories": current_user.preferences.get("categories", []),
-            "sizes": current_user.preferences.get("sizes", []),
-            "risk_profile": current_user.preferences.get("risk_profile", "balanced"),
-        }
-
-    # Run AI analysis
-    analysis = await ai_service.analyze_deal(
-        deal_data=deal_data,
-        vinted_stats=vinted_stats,
-        user_preferences=user_preferences,
-        include_llm_analysis=include_llm
-    )
-
-    return {
-        "deal_id": str(deal_id),
-        "deal": deal_data,
-        "vinted_stats": vinted_stats,
-        "analysis": analysis,
-    }
+    return deal_to_response(deal)
 
 
 @router.get("/top/recommended", response_model=List[DealResponse])
@@ -410,16 +341,14 @@ async def get_top_recommended_deals(
 ):
     """Get top recommended deals by FlipScore."""
 
-    # Use outerjoin to handle cases where no DealScore exists yet
     query = (
         select(Deal)
         .options(
-            selectinload(Deal.source),
             selectinload(Deal.vinted_stats),
-            selectinload(Deal.score),
+            selectinload(Deal.deal_score),
         )
-        .outerjoin(DealScore)
-        .where(Deal.status == DealStatus.ACTIVE)
+        .outerjoin(DealScore, Deal.id == DealScore.deal_id)
+        .where(Deal.in_stock == True)
     )
 
     # Apply user category filter from preferences
@@ -431,11 +360,11 @@ async def get_top_recommended_deals(
     if category:
         query = query.where(Deal.category == category)
 
-    # Filter for recommended deals if they have scores, otherwise just get active deals
+    # Filter for recommended deals if they have scores
     query = query.where(
         or_(
             DealScore.recommended_action == "buy",
-            DealScore.id.is_(None)  # Include deals without scores
+            DealScore.id.is_(None)
         )
     )
 
@@ -445,46 +374,4 @@ async def get_top_recommended_deals(
     result = await db.execute(query)
     deals = result.scalars().unique().all()
 
-    return [
-        DealResponse(
-            id=deal.id,
-            product_name=deal.product_name,
-            brand=deal.brand,
-            model=deal.model,
-            category=deal.category,
-            color=deal.color,
-            gender=deal.gender,
-            original_price=float(deal.original_price) if deal.original_price else None,
-            sale_price=float(deal.sale_price),
-            discount_pct=float(deal.discount_percent) if deal.discount_percent else None,
-            product_url=deal.product_url,
-            image_url=deal.image_url,
-            sizes_available=deal.sizes_available,
-            stock_available=deal.stock_available,
-            source_name=deal.source.name if deal.source else None,
-            detected_at=deal.detected_at,
-            vinted_stats=VintedStatsResponse(
-                nb_listings=deal.vinted_stats.nb_listings,
-                price_min=float(deal.vinted_stats.price_min) if deal.vinted_stats.price_min else None,
-                price_max=float(deal.vinted_stats.price_max) if deal.vinted_stats.price_max else None,
-                price_median=float(deal.vinted_stats.price_median) if deal.vinted_stats.price_median else None,
-                margin_euro=float(deal.vinted_stats.margin_euro) if deal.vinted_stats.margin_euro else None,
-                margin_pct=float(deal.vinted_stats.margin_percent) if deal.vinted_stats.margin_percent else None,
-                liquidity_score=float(deal.vinted_stats.liquidity_score) if deal.vinted_stats.liquidity_score else None,
-            ) if deal.vinted_stats else None,
-            score=DealScoreResponse(
-                flip_score=float(deal.score.flip_score),
-                margin_score=float(deal.score.margin_score) if deal.score.margin_score else None,
-                liquidity_score=float(deal.score.liquidity_score) if deal.score.liquidity_score else None,
-                popularity_score=float(deal.score.popularity_score) if deal.score.popularity_score else None,
-                score_breakdown=ScoreBreakdownResponse(**deal.score.score_breakdown) if deal.score.score_breakdown else None,
-                recommended_action=deal.score.recommended_action,
-                recommended_price=float(deal.score.recommended_price) if deal.score.recommended_price else None,
-                confidence=float(deal.score.confidence) if deal.score.confidence else None,
-                explanation_short=deal.score.explanation_short,
-                risks=deal.score.risks,
-                estimated_sell_days=deal.score.estimated_sell_days,
-            ) if deal.score else None,
-        )
-        for deal in deals
-    ]
+    return [deal_to_response(deal) for deal in deals]

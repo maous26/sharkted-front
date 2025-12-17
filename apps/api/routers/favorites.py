@@ -62,7 +62,7 @@ async def list_favorites(
     """Liste les favoris d'un utilisateur avec pagination."""
 
     # Use user_id from query if provided (for admin), otherwise current user
-    target_user_id = uuid.UUID(user_id) if user_id else current_user.id
+    target_user_id = int(user_id) if user_id else current_user.id
 
     # Count total
     count_query = select(Favorite).where(Favorite.user_id == target_user_id)
@@ -91,15 +91,15 @@ async def list_favorites(
             deal = fav.deal
             deal_data = {
                 "id": str(deal.id),
-                "title": deal.title if hasattr(deal, 'title') else deal.product_name,
-                "product_name": deal.product_name if hasattr(deal, 'product_name') else deal.title,
-                "brand": deal.seller_name if hasattr(deal, 'seller_name') else "",
+                "title": deal.title,
+                "product_name": deal.title,
+                "brand": deal.brand or "",
                 "price": float(deal.price) if deal.price else 0,
                 "original_price": float(deal.original_price) if deal.original_price else None,
                 "discount_percent": float(deal.discount_percent) if deal.discount_percent else None,
-                "url": deal.url if hasattr(deal, 'url') else "",
-                "image_url": deal.image_url if hasattr(deal, 'image_url') else None,
-                "source": deal.source.name if deal.source else "",
+                "url": deal.url,
+                "image_url": deal.image_url,
+                "source": deal.source,
                 "first_seen_at": deal.first_seen_at.isoformat() if deal.first_seen_at else None,
             }
 
@@ -131,22 +131,13 @@ async def get_favorite_ids(
 ):
     """Retourne la liste des IDs de deals favoris de l'utilisateur."""
 
-    target_user_id = uuid.UUID(user_id) if user_id else current_user.id
+    target_user_id = int(user_id) if user_id else current_user.id
 
     query = select(Favorite.deal_id).where(Favorite.user_id == target_user_id)
     result = await db.execute(query)
-    deal_ids = [str(row[0]) for row in result.all()]
+    deal_ids = [row[0] for row in result.all()]
 
-    # Convert UUIDs to integers if possible (for frontend compatibility)
-    int_ids = []
-    for did in deal_ids:
-        try:
-            # Try to extract numeric ID
-            int_ids.append(int(did.replace("-", "")[:8], 16))
-        except (ValueError, AttributeError):
-            pass
-
-    return FavoriteIdsResponse(deal_ids=int_ids)
+    return FavoriteIdsResponse(deal_ids=deal_ids)
 
 
 @router.post("")
@@ -158,20 +149,11 @@ async def add_favorite(
 ):
     """Ajoute un deal aux favoris."""
 
-    target_user_id = uuid.UUID(user_id) if user_id else current_user.id
+    target_user_id = int(user_id) if user_id else current_user.id
 
-    # Find deal by numeric ID (converted from frontend)
-    # The frontend sends an integer, we need to find the UUID deal
-    deals_query = select(Deal).order_by(Deal.first_seen_at.desc()).limit(1000)
-    deals_result = await db.execute(deals_query)
-    deals = deals_result.scalars().all()
-
-    target_deal = None
-    for deal in deals:
-        deal_int_id = int(str(deal.id).replace("-", "")[:8], 16)
-        if deal_int_id == data.deal_id:
-            target_deal = deal
-            break
+    # Check deal exists
+    deal_result = await db.execute(select(Deal).where(Deal.id == data.deal_id))
+    target_deal = deal_result.scalar_one_or_none()
 
     if not target_deal:
         raise HTTPException(status_code=404, detail="Deal non trouve")
@@ -210,28 +192,13 @@ async def remove_favorite(
 ):
     """Retire un deal des favoris."""
 
-    target_user_id = uuid.UUID(user_id) if user_id else current_user.id
-
-    # Find deal by numeric ID
-    deals_query = select(Deal).order_by(Deal.first_seen_at.desc()).limit(1000)
-    deals_result = await db.execute(deals_query)
-    deals = deals_result.scalars().all()
-
-    target_deal = None
-    for deal in deals:
-        deal_int_id = int(str(deal.id).replace("-", "")[:8], 16)
-        if deal_int_id == deal_id:
-            target_deal = deal
-            break
-
-    if not target_deal:
-        raise HTTPException(status_code=404, detail="Deal non trouve")
+    target_user_id = int(user_id) if user_id else current_user.id
 
     # Delete favorite
     result = await db.execute(
         delete(Favorite).where(
             Favorite.user_id == target_user_id,
-            Favorite.deal_id == target_deal.id
+            Favorite.deal_id == deal_id
         )
     )
     await db.commit()
@@ -239,7 +206,7 @@ async def remove_favorite(
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Favori non trouve")
 
-    logger.info(f"Favorite removed: user={target_user_id}, deal={target_deal.id}")
+    logger.info(f"Favorite removed: user={target_user_id}, deal={deal_id}")
 
     return {"success": True}
 
@@ -253,28 +220,13 @@ async def check_favorite(
 ):
     """Verifie si un deal est en favoris."""
 
-    target_user_id = uuid.UUID(user_id) if user_id else current_user.id
-
-    # Find deal by numeric ID
-    deals_query = select(Deal).order_by(Deal.first_seen_at.desc()).limit(1000)
-    deals_result = await db.execute(deals_query)
-    deals = deals_result.scalars().all()
-
-    target_deal = None
-    for deal in deals:
-        deal_int_id = int(str(deal.id).replace("-", "")[:8], 16)
-        if deal_int_id == deal_id:
-            target_deal = deal
-            break
-
-    if not target_deal:
-        return {"is_favorite": False}
+    target_user_id = int(user_id) if user_id else current_user.id
 
     # Check if favorited
     result = await db.execute(
         select(Favorite).where(
             Favorite.user_id == target_user_id,
-            Favorite.deal_id == target_deal.id
+            Favorite.deal_id == deal_id
         )
     )
     is_favorite = result.scalar_one_or_none() is not None

@@ -71,91 +71,72 @@ class PlanType(str, enum.Enum):
 
 # ============= MODELS =============
 
-class Source(Base):
-    """Sources de scraping (Nike, Adidas, etc.)"""
-    __tablename__ = "sources"
-    
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    slug: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    base_url: Mapped[str] = mapped_column(Text, nullable=False)
-    scraper_config: Mapped[Optional[dict]] = mapped_column(JSON, default={})
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    priority: Mapped[int] = mapped_column(Integer, default=1)
-    last_scraped_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    last_error: Mapped[Optional[str]] = mapped_column(Text)
-    total_deals_found: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
-    # Relations
-    deals: Mapped[List["Deal"]] = relationship("Deal", back_populates="source")
-
-
 class Deal(Base):
     """Deals détectés (produits en promo)"""
     __tablename__ = "deals"
-    
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    source_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sources.id"))
-    
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source: Mapped[str] = mapped_column(String(50), nullable=False)
+
     # Identité produit
-    external_id: Mapped[str] = mapped_column(String(100))
-    product_name: Mapped[str] = mapped_column(Text, nullable=False)
+    external_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
     brand: Mapped[Optional[str]] = mapped_column(String(100))
-    model: Mapped[Optional[str]] = mapped_column(String(200))
-    category: Mapped[Optional[str]] = mapped_column(String(50))
-    subcategory: Mapped[Optional[str]] = mapped_column(String(50))
+    model: Mapped[Optional[str]] = mapped_column(String(255))
+    category: Mapped[Optional[str]] = mapped_column(String(100))
     color: Mapped[Optional[str]] = mapped_column(String(100))
     gender: Mapped[Optional[str]] = mapped_column(String(20))
-    
+
     # Prix
-    original_price: Mapped[float] = mapped_column(Float, nullable=False)
-    sale_price: Mapped[float] = mapped_column(Float, nullable=False)
-    discount_percent: Mapped[float] = mapped_column(Float)
-    
-    # Tailles
-    sizes_available: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), default=[])
-    
+    price: Mapped[float] = mapped_column(Float, nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), default="EUR")
+    original_price: Mapped[Optional[float]] = mapped_column(Float)
+    discount_percent: Mapped[Optional[float]] = mapped_column(Float)
+
+    # Tailles (JSONB in DB)
+    sizes_available: Mapped[Optional[dict]] = mapped_column(JSON)
+
     # URLs et images
-    product_url: Mapped[str] = mapped_column(Text, nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
     image_url: Mapped[Optional[str]] = mapped_column(Text)
-    
+
+    # Seller info
+    seller_name: Mapped[Optional[str]] = mapped_column(String(255))
+    location: Mapped[Optional[str]] = mapped_column(String(255))
+
     # Status
-    status: Mapped[DealStatus] = mapped_column(SQLEnum(DealStatus), default=DealStatus.ACTIVE)
-    stock_available: Mapped[bool] = mapped_column(Boolean, default=True)
-    
+    in_stock: Mapped[bool] = mapped_column(Boolean, default=True)
+    score: Mapped[Optional[float]] = mapped_column(Float)
+
+    # Raw data
+    raw_data: Mapped[Optional[dict]] = mapped_column(JSON)
+
     # Timestamps
-    detected_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    price_updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+
     # Relations
-    source: Mapped["Source"] = relationship("Source", back_populates="deals")
     vinted_stats: Mapped[Optional["VintedStats"]] = relationship("VintedStats", back_populates="deal", uselist=False)
-    score: Mapped[Optional["DealScore"]] = relationship("DealScore", back_populates="deal", uselist=False)
+    deal_score: Mapped[Optional["DealScore"]] = relationship("DealScore", back_populates="deal", uselist=False)
     outcomes: Mapped[List["Outcome"]] = relationship("Outcome", back_populates="deal")
-    
-    # Index et contraintes
+
+    # Index - using existing index names from DB
     __table_args__ = (
-        UniqueConstraint('source_id', 'external_id', name='uq_source_external'),
-        Index('idx_deals_status', 'status'),
-        Index('idx_deals_brand', 'brand'),
-        Index('idx_deals_category', 'category'),
-        Index('idx_deals_detected', 'detected_at'),
+        UniqueConstraint('source', 'external_id', name='ix_deals_source_external_id'),
     )
 
 
 class VintedStats(Base):
     """Statistiques Vinted pour chaque deal"""
     __tablename__ = "vinted_stats"
-    
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    deal_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("deals.id"), unique=True)
-    
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    deal_id: Mapped[int] = mapped_column(Integer, ForeignKey("deals.id", ondelete="CASCADE"), unique=True)
+
     # Stats de marché
-    nb_listings: Mapped[int] = mapped_column(Integer, default=0)
-    nb_listings_by_size: Mapped[Optional[dict]] = mapped_column(JSON, default={})
-    
+    nb_listings: Mapped[Optional[int]] = mapped_column(Integer, default=0)
+
     # Prix
     price_min: Mapped[Optional[float]] = mapped_column(Float)
     price_max: Mapped[Optional[float]] = mapped_column(Float)
@@ -163,66 +144,64 @@ class VintedStats(Base):
     price_median: Mapped[Optional[float]] = mapped_column(Float)
     price_p25: Mapped[Optional[float]] = mapped_column(Float)
     price_p75: Mapped[Optional[float]] = mapped_column(Float)
-    
+    coefficient_variation: Mapped[Optional[float]] = mapped_column(Float)
+
     # Calculs
     margin_euro: Mapped[Optional[float]] = mapped_column(Float)
-    margin_percent: Mapped[Optional[float]] = mapped_column(Float)
+    margin_pct: Mapped[Optional[float]] = mapped_column(Float)
     liquidity_score: Mapped[Optional[float]] = mapped_column(Float)
-    
+
     # Sample listings
-    sample_listings: Mapped[Optional[List[dict]]] = mapped_column(JSON, default=[])
-    
+    sample_listings: Mapped[Optional[dict]] = mapped_column(JSON)
+    search_query: Mapped[Optional[str]] = mapped_column(String(255))
+
     # Timestamps
-    computed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
+    computed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, default=datetime.utcnow)
+
     # Relations
     deal: Mapped["Deal"] = relationship("Deal", back_populates="vinted_stats")
-    
-    __table_args__ = (
-        Index('idx_vinted_deal', 'deal_id'),
-        Index('idx_vinted_liquidity', 'liquidity_score'),
-    )
 
 
 class DealScore(Base):
     """Scores IA pour chaque deal"""
     __tablename__ = "deal_scores"
-    
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    deal_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("deals.id"), unique=True)
-    
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    deal_id: Mapped[int] = mapped_column(Integer, ForeignKey("deals.id", ondelete="CASCADE"), unique=True)
+
     # Scores (0-100)
-    flip_score: Mapped[float] = mapped_column(Float, default=0)
-    popularity_score: Mapped[float] = mapped_column(Float, default=0)
-    liquidity_score: Mapped[float] = mapped_column(Float, default=0)
-    margin_score: Mapped[float] = mapped_column(Float, default=0)
-    anomaly_score: Mapped[Optional[float]] = mapped_column(Float)
-    
+    flip_score: Mapped[float] = mapped_column(Float, nullable=False)
+    popularity_score: Mapped[Optional[float]] = mapped_column(Float)
+    liquidity_score: Mapped[Optional[float]] = mapped_column(Float)
+    margin_score: Mapped[Optional[float]] = mapped_column(Float)
+    score_breakdown: Mapped[Optional[dict]] = mapped_column(JSON)
+
     # Recommandations
-    recommended_action: Mapped[RecommendedAction] = mapped_column(
-        SQLEnum(RecommendedAction), 
-        default=RecommendedAction.IGNORE
-    )
+    recommended_action: Mapped[Optional[str]] = mapped_column(String(20))
     recommended_price: Mapped[Optional[float]] = mapped_column(Float)
-    recommended_price_range: Mapped[Optional[dict]] = mapped_column(JSON)
-    confidence: Mapped[float] = mapped_column(Float, default=0)
-    
-    # Explications LLM
+    confidence: Mapped[Optional[float]] = mapped_column(Float)
+
+    # Explications
     explanation: Mapped[Optional[str]] = mapped_column(Text)
-    risks: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), default=[])
+    explanation_short: Mapped[Optional[str]] = mapped_column(String(255))
+    risks: Mapped[Optional[dict]] = mapped_column(JSON)
     estimated_sell_days: Mapped[Optional[int]] = mapped_column(Integer)
-    
+
     # Metadata
-    model_version: Mapped[str] = mapped_column(String(50), default="rules_v1")
-    computed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
+    model_version: Mapped[Optional[str]] = mapped_column(String(50), default="rules_v1")
+    computed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Vinted data
+    vinted_median_price: Mapped[Optional[float]] = mapped_column(Float)
+    vinted_avg_days_to_sell: Mapped[Optional[float]] = mapped_column(Float)
+    vinted_total_sold: Mapped[Optional[int]] = mapped_column(Integer)
+    vinted_total_listings: Mapped[Optional[int]] = mapped_column(Integer)
+    vinted_searched_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+
     # Relations
-    deal: Mapped["Deal"] = relationship("Deal", back_populates="score")
-    
-    __table_args__ = (
-        Index('idx_scores_flip', 'flip_score'),
-        Index('idx_scores_action', 'recommended_action'),
-    )
+    deal: Mapped["Deal"] = relationship("Deal", back_populates="deal_score")
 
 
 class User(Base):
@@ -279,61 +258,57 @@ class User(Base):
 class Outcome(Base):
     """Tracking des résultats (pour entraîner le ML)"""
     __tablename__ = "outcomes"
-    
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    deal_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("deals.id"))
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    deal_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("deals.id"))
+
     # Action prise
-    action: Mapped[ActionType] = mapped_column(SQLEnum(ActionType), nullable=False)
+    action: Mapped[str] = mapped_column(String(20), nullable=False)
     buy_price: Mapped[Optional[float]] = mapped_column(Float)
     buy_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     buy_size: Mapped[Optional[str]] = mapped_column(String(20))
-    
+    buy_platform: Mapped[Optional[str]] = mapped_column(String(50))
+
     # Résultat
-    sold: Mapped[bool] = mapped_column(Boolean, default=False)
+    sold: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sell_price: Mapped[Optional[float]] = mapped_column(Float)
     sell_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     sell_platform: Mapped[Optional[str]] = mapped_column(String(50))
-    
+
     # Métriques réelles
     actual_margin_euro: Mapped[Optional[float]] = mapped_column(Float)
-    actual_margin_percent: Mapped[Optional[float]] = mapped_column(Float)
+    actual_margin_pct: Mapped[Optional[float]] = mapped_column(Float)
     days_to_sell: Mapped[Optional[int]] = mapped_column(Integer)
-    
+
     # Feedback
-    rating: Mapped[Optional[int]] = mapped_column(Integer)  # 1-5
+    was_good_deal: Mapped[Optional[bool]] = mapped_column(Boolean)
+    difficulty_rating: Mapped[Optional[int]] = mapped_column(Integer)
+    context_snapshot: Mapped[Optional[dict]] = mapped_column(JSON)
     notes: Mapped[Optional[str]] = mapped_column(Text)
-    
+
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
     # Relations
-    deal: Mapped["Deal"] = relationship("Deal", back_populates="outcomes")
+    deal: Mapped[Optional["Deal"]] = relationship("Deal", back_populates="outcomes")
     user: Mapped["User"] = relationship("User", back_populates="outcomes")
-    
-    __table_args__ = (
-        Index('idx_outcomes_user', 'user_id'),
-        Index('idx_outcomes_deal', 'deal_id'),
-    )
 
 
 class Alert(Base):
     """Alertes envoyées aux utilisateurs"""
     __tablename__ = "alerts"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    deal_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("deals.id"))
-    
-    # Alert info
-    channel: Mapped[str] = mapped_column(String(20))  # discord, email, push
-    sent_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    delivered: Mapped[bool] = mapped_column(Boolean, default=False)
-    clicked: Mapped[bool] = mapped_column(Boolean, default=False)
-    clicked_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    message: Mapped[Optional[str]] = mapped_column(Text)
+    deal_id: Mapped[Optional[str]] = mapped_column(String(255))
+    is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
     # Relations
     user: Mapped["User"] = relationship("User", back_populates="alerts")
 
@@ -416,19 +391,14 @@ class ScrapingLog(Base):
 
 class Favorite(Base):
     """Deals favoris/trackés par les utilisateurs"""
-    __tablename__ = "favorites"
+    __tablename__ = "user_favorites"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    deal_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("deals.id"), nullable=False)
+    deal_id: Mapped[int] = mapped_column(Integer, ForeignKey("deals.id"), nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relations
     user: Mapped["User"] = relationship("User", back_populates="favorites")
     deal: Mapped["Deal"] = relationship("Deal")
-
-    __table_args__ = (
-        UniqueConstraint('user_id', 'deal_id', name='uq_user_deal_favorite'),
-        Index('idx_favorites_user', 'user_id'),
-    )
