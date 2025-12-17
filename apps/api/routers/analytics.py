@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 
 from database import (
-    get_db, Deal, VintedStats, DealScore, Source, 
-    Outcome, User, DealStatus, ActionType
+    get_db, Deal, VintedStats, DealScore,
+    Outcome, User
 )
 from routers.users import get_current_user
 
@@ -37,7 +37,6 @@ class SourceStats(BaseModel):
     source: str
     total_deals: int
     avg_discount: float
-    last_scraped: Optional[datetime]
 
 class TrendData(BaseModel):
     date: str
@@ -57,12 +56,12 @@ async def get_dashboard_stats(
     today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Total active deals
-    total_query = select(func.count(Deal.id)).where(Deal.status == DealStatus.ACTIVE)
+    total_query = select(func.count(Deal.id)).where(Deal.in_stock == True)
     total_result = await db.execute(total_query)
     total_deals = total_result.scalar() or 0
 
     # Deals today
-    today_query = select(func.count(Deal.id)).where(Deal.detected_at >= today)
+    today_query = select(func.count(Deal.id)).where(Deal.first_seen_at >= today)
     today_result = await db.execute(today_query)
     deals_today = today_result.scalar() or 0
 
@@ -70,8 +69,8 @@ async def get_dashboard_stats(
     avg_score_query = (
         select(func.avg(DealScore.flip_score))
         .select_from(DealScore)
-        .join(Deal)
-        .where(Deal.status == DealStatus.ACTIVE)
+        .join(Deal, Deal.id == DealScore.deal_id)
+        .where(Deal.in_stock == True)
     )
     avg_score_result = await db.execute(avg_score_query)
     avg_flip_score = avg_score_result.scalar() or 0
@@ -79,9 +78,9 @@ async def get_dashboard_stats(
     # Active deals (Score >= 60)
     active_query = (
         select(func.count(Deal.id))
-        .join(DealScore)
+        .join(DealScore, Deal.id == DealScore.deal_id)
         .where(and_(
-            Deal.status == DealStatus.ACTIVE,
+            Deal.in_stock == True,
             DealScore.flip_score >= 60
         ))
     )
@@ -91,22 +90,22 @@ async def get_dashboard_stats(
     # Top deals count (score >= 80 for top deals section)
     top_query = (
         select(func.count(Deal.id))
-        .join(DealScore)
+        .join(DealScore, Deal.id == DealScore.deal_id)
         .where(and_(
-            Deal.status == DealStatus.ACTIVE,
+            Deal.in_stock == True,
             DealScore.flip_score >= 80
         ))
     )
     top_result = await db.execute(top_query)
     top_deals_count = top_result.scalar() or 0
 
-    # Total sources
-    sources_query = select(func.count(Source.id)).where(Source.is_active == True)
+    # Total sources (count distinct sources)
+    sources_query = select(func.count(func.distinct(Deal.source)))
     sources_result = await db.execute(sources_query)
     total_sources = sources_result.scalar() or 0
 
     # Last scan time
-    last_scan_query = select(func.max(Source.last_scraped_at))
+    last_scan_query = select(func.max(Deal.last_seen_at))
     last_scan_result = await db.execute(last_scan_query)
     last_scan = last_scan_result.scalar()
 
@@ -130,68 +129,68 @@ async def get_analytics_overview(
     Vue d'ensemble des analytics
     """
     since = datetime.utcnow() - timedelta(days=days)
-    
+
     # Total deals
-    total_query = select(func.count(Deal.id)).where(Deal.detected_at >= since)
+    total_query = select(func.count(Deal.id)).where(Deal.first_seen_at >= since)
     total_result = await db.execute(total_query)
     total_deals = total_result.scalar() or 0
-    
+
     # Active deals
-    active_query = select(func.count(Deal.id)).where(Deal.status == DealStatus.ACTIVE)
+    active_query = select(func.count(Deal.id)).where(Deal.in_stock == True)
     active_result = await db.execute(active_query)
     active_deals = active_result.scalar() or 0
-    
+
     # Deals avec bon score (>= 70)
     good_query = (
         select(func.count(Deal.id))
-        .join(DealScore)
+        .join(DealScore, Deal.id == DealScore.deal_id)
         .where(and_(
-            Deal.detected_at >= since,
+            Deal.first_seen_at >= since,
             DealScore.flip_score >= 70
         ))
     )
     good_result = await db.execute(good_query)
     good_deals = good_result.scalar() or 0
-    
+
     # Excellent deals (>= 85)
     excellent_query = (
         select(func.count(Deal.id))
-        .join(DealScore)
+        .join(DealScore, Deal.id == DealScore.deal_id)
         .where(and_(
-            Deal.detected_at >= since,
+            Deal.first_seen_at >= since,
             DealScore.flip_score >= 85
         ))
     )
     excellent_result = await db.execute(excellent_query)
     excellent_deals = excellent_result.scalar() or 0
-    
+
     # Average flip score
     avg_score_query = (
         select(func.avg(DealScore.flip_score))
-        .join(Deal)
-        .where(Deal.detected_at >= since)
+        .join(Deal, Deal.id == DealScore.deal_id)
+        .where(Deal.first_seen_at >= since)
     )
     avg_score_result = await db.execute(avg_score_query)
     avg_flip_score = avg_score_result.scalar() or 0
-    
+
     # Average margin
     avg_margin_query = (
-        select(func.avg(VintedStats.margin_percent))
-        .join(Deal)
-        .where(Deal.detected_at >= since)
+        select(func.avg(VintedStats.margin_pct))
+        .join(Deal, Deal.id == VintedStats.deal_id)
+        .where(Deal.first_seen_at >= since)
     )
     avg_margin_result = await db.execute(avg_margin_query)
     avg_margin = avg_margin_result.scalar() or 0
-    
+
     # Best margin
     best_margin_query = (
-        select(func.max(VintedStats.margin_percent))
-        .join(Deal)
-        .where(Deal.detected_at >= since)
+        select(func.max(VintedStats.margin_pct))
+        .join(Deal, Deal.id == VintedStats.deal_id)
+        .where(Deal.first_seen_at >= since)
     )
     best_margin_result = await db.execute(best_margin_query)
     best_margin = best_margin_result.scalar() or 0
-    
+
     return {
         "period_days": days,
         "total_deals_detected": total_deals,
@@ -215,30 +214,30 @@ async def get_stats_by_brand(
     Statistiques par marque
     """
     since = datetime.utcnow() - timedelta(days=days)
-    
+
     query = (
         select(
             Deal.brand,
             func.count(Deal.id).label("total_deals"),
             func.avg(Deal.discount_percent).label("avg_discount"),
-            func.avg(VintedStats.margin_percent).label("avg_margin"),
+            func.avg(VintedStats.margin_pct).label("avg_margin"),
             func.avg(DealScore.flip_score).label("avg_flip_score"),
             func.max(DealScore.flip_score).label("best_deal_score")
         )
         .outerjoin(VintedStats, Deal.id == VintedStats.deal_id)
         .outerjoin(DealScore, Deal.id == DealScore.deal_id)
         .where(and_(
-            Deal.detected_at >= since,
+            Deal.first_seen_at >= since,
             Deal.brand.isnot(None)
         ))
         .group_by(Deal.brand)
         .order_by(desc("total_deals"))
         .limit(limit)
     )
-    
+
     result = await db.execute(query)
     rows = result.fetchall()
-    
+
     return [
         BrandStats(
             brand=row.brand or "Unknown",
@@ -261,24 +260,24 @@ async def get_stats_by_category(
     Statistiques par catégorie
     """
     since = datetime.utcnow() - timedelta(days=days)
-    
+
     query = (
         select(
             Deal.category,
             func.count(Deal.id).label("total_deals"),
-            func.avg(VintedStats.margin_percent).label("avg_margin"),
+            func.avg(VintedStats.margin_pct).label("avg_margin"),
             func.avg(DealScore.flip_score).label("avg_flip_score")
         )
         .outerjoin(VintedStats, Deal.id == VintedStats.deal_id)
         .outerjoin(DealScore, Deal.id == DealScore.deal_id)
-        .where(Deal.detected_at >= since)
+        .where(Deal.first_seen_at >= since)
         .group_by(Deal.category)
         .order_by(desc("total_deals"))
     )
-    
+
     result = await db.execute(query)
     rows = result.fetchall()
-    
+
     return [
         CategoryStats(
             category=row.category or "autre",
@@ -299,25 +298,22 @@ async def get_stats_by_source(
     """
     query = (
         select(
-            Source.name,
+            Deal.source,
             func.count(Deal.id).label("total_deals"),
             func.avg(Deal.discount_percent).label("avg_discount"),
-            Source.last_scraped_at
         )
-        .outerjoin(Deal, Source.id == Deal.source_id)
-        .group_by(Source.id)
+        .group_by(Deal.source)
         .order_by(desc("total_deals"))
     )
-    
+
     result = await db.execute(query)
     rows = result.fetchall()
-    
+
     return [
         SourceStats(
-            source=row.name,
+            source=row.source,
             total_deals=row.total_deals or 0,
             avg_discount=round(row.avg_discount or 0, 1),
-            last_scraped=row.last_scraped_at
         )
         for row in rows
     ]
@@ -332,24 +328,24 @@ async def get_trends(
     Tendances journalières des deals
     """
     since = datetime.utcnow() - timedelta(days=days)
-    
+
     query = (
         select(
-            func.date(Deal.detected_at).label("date"),
+            func.date(Deal.first_seen_at).label("date"),
             func.count(Deal.id).label("deals_count"),
             func.avg(DealScore.flip_score).label("avg_flip_score"),
-            func.avg(VintedStats.margin_percent).label("avg_margin")
+            func.avg(VintedStats.margin_pct).label("avg_margin")
         )
         .outerjoin(DealScore, Deal.id == DealScore.deal_id)
         .outerjoin(VintedStats, Deal.id == VintedStats.deal_id)
-        .where(Deal.detected_at >= since)
-        .group_by(func.date(Deal.detected_at))
+        .where(Deal.first_seen_at >= since)
+        .group_by(func.date(Deal.first_seen_at))
         .order_by("date")
     )
-    
+
     result = await db.execute(query)
     rows = result.fetchall()
-    
+
     return [
         TrendData(
             date=str(row.date),
@@ -371,7 +367,7 @@ async def get_user_performance(
     Performance personnelle de l'utilisateur
     """
     since = datetime.utcnow() - timedelta(days=days)
-    
+
     # Outcomes bought
     bought_query = (
         select(
@@ -380,7 +376,7 @@ async def get_user_performance(
         )
         .where(and_(
             Outcome.user_id == current_user.id,
-            Outcome.action == ActionType.BOUGHT,
+            Outcome.action == "bought",
             Outcome.created_at >= since
         ))
     )
@@ -393,7 +389,7 @@ async def get_user_performance(
             func.count(Outcome.id).label("total"),
             func.sum(Outcome.sell_price).label("total_revenue"),
             func.sum(Outcome.actual_margin_euro).label("total_profit"),
-            func.avg(Outcome.actual_margin_percent).label("avg_margin"),
+            func.avg(Outcome.actual_margin_pct).label("avg_margin"),
             func.avg(Outcome.days_to_sell).label("avg_days")
         )
         .where(and_(
