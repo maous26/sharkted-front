@@ -139,6 +139,212 @@ def deal_to_response(deal: Deal) -> DealResponse:
     )
 
 
+# ==================== STATIC ROUTES FIRST ====================
+# These must be defined BEFORE /{deal_id} to avoid being captured
+
+@router.get("/stats")
+async def get_deals_stats(
+    db: AsyncSession = Depends(get_db),
+):
+    """Get deals statistics summary (main stats endpoint)."""
+
+    # Total active deals
+    total_query = select(func.count(Deal.id)).where(Deal.in_stock == True)
+    total_result = await db.execute(total_query)
+    total_active = total_result.scalar() or 0
+
+    # Deals with good score (>= 70)
+    good_score_query = (
+        select(func.count(Deal.id))
+        .join(DealScore, Deal.id == DealScore.deal_id)
+        .where(and_(Deal.in_stock == True, DealScore.flip_score >= 70))
+    )
+    good_score_result = await db.execute(good_score_query)
+    good_deals = good_score_result.scalar() or 0
+
+    # New deals (last 24h)
+    yesterday = datetime.utcnow() - timedelta(hours=24)
+    new_query = select(func.count(Deal.id)).where(
+        and_(Deal.in_stock == True, Deal.first_seen_at >= yesterday)
+    )
+    new_result = await db.execute(new_query)
+    new_deals = new_result.scalar() or 0
+
+    # By source
+    source_query = (
+        select(Deal.source, func.count(Deal.id))
+        .where(Deal.in_stock == True)
+        .group_by(Deal.source)
+    )
+    source_result = await db.execute(source_query)
+    by_source = {row[0]: row[1] for row in source_result.fetchall()}
+
+    # By category
+    category_query = (
+        select(Deal.category, func.count(Deal.id))
+        .where(Deal.in_stock == True)
+        .group_by(Deal.category)
+    )
+    category_result = await db.execute(category_query)
+    by_category = {row[0] or "other": row[1] for row in category_result.fetchall()}
+
+    return {
+        "total_active": total_active,
+        "good_deals": good_deals,
+        "new_last_24h": new_deals,
+        "by_source": by_source,
+        "by_category": by_category,
+    }
+
+
+@router.get("/stats/summary")
+async def get_deals_stats_summary(
+    db: AsyncSession = Depends(get_db),
+):
+    """Alias for /stats - Get deals statistics summary."""
+    return await get_deals_stats(db)
+
+
+@router.get("/stats/brands")
+async def get_brands_stats(
+    limit: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get stats by brand."""
+    query = (
+        select(Deal.brand, func.count(Deal.id).label("count"))
+        .where(and_(Deal.in_stock == True, Deal.brand.isnot(None)))
+        .group_by(Deal.brand)
+        .order_by(func.count(Deal.id).desc())
+        .limit(limit)
+    )
+    result = await db.execute(query)
+    return [{"brand": row[0], "count": row[1]} for row in result.fetchall()]
+
+
+@router.get("/stats/categories")
+async def get_categories_stats(
+    db: AsyncSession = Depends(get_db),
+):
+    """Get stats by category."""
+    query = (
+        select(Deal.category, func.count(Deal.id).label("count"))
+        .where(Deal.in_stock == True)
+        .group_by(Deal.category)
+        .order_by(func.count(Deal.id).desc())
+    )
+    result = await db.execute(query)
+    return [{"category": row[0] or "other", "count": row[1]} for row in result.fetchall()]
+
+
+@router.get("/stats/sources")
+async def get_sources_stats(
+    db: AsyncSession = Depends(get_db),
+):
+    """Get stats by source."""
+    query = (
+        select(Deal.source, func.count(Deal.id).label("count"))
+        .where(Deal.in_stock == True)
+        .group_by(Deal.source)
+        .order_by(func.count(Deal.id).desc())
+    )
+    result = await db.execute(query)
+    return [{"source": row[0], "count": row[1]} for row in result.fetchall()]
+
+
+@router.get("/stats/trends")
+async def get_deals_trends(
+    days: int = Query(7, ge=1, le=30),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get deals trends over time."""
+    since = datetime.utcnow() - timedelta(days=days)
+
+    query = (
+        select(
+            func.date(Deal.first_seen_at).label("date"),
+            func.count(Deal.id).label("count")
+        )
+        .where(Deal.first_seen_at >= since)
+        .group_by(func.date(Deal.first_seen_at))
+        .order_by(func.date(Deal.first_seen_at))
+    )
+    result = await db.execute(query)
+    return [{"date": str(row[0]), "count": row[1]} for row in result.fetchall()]
+
+
+@router.get("/stats/score-distribution")
+async def get_score_distribution(
+    db: AsyncSession = Depends(get_db),
+):
+    """Get distribution of flip scores."""
+    # Define score ranges
+    ranges = [
+        (0, 40, "0-40"),
+        (40, 60, "40-60"),
+        (60, 70, "60-70"),
+        (70, 80, "70-80"),
+        (80, 90, "80-90"),
+        (90, 100, "90-100"),
+    ]
+
+    distribution = []
+    for min_score, max_score, label in ranges:
+        query = (
+            select(func.count(DealScore.id))
+            .join(Deal, Deal.id == DealScore.deal_id)
+            .where(and_(
+                Deal.in_stock == True,
+                DealScore.flip_score >= min_score,
+                DealScore.flip_score < max_score
+            ))
+        )
+        result = await db.execute(query)
+        count = result.scalar() or 0
+        distribution.append({"range": label, "count": count})
+
+    return distribution
+
+
+@router.get("/top/recommended", response_model=List[DealResponse])
+async def get_top_recommended_deals(
+    limit: int = Query(10, ge=1, le=50),
+    category: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user_optional),
+):
+    """Get top recommended deals by FlipScore."""
+
+    query = (
+        select(Deal)
+        .options(
+            selectinload(Deal.vinted_stats),
+            selectinload(Deal.deal_score),
+        )
+        .outerjoin(DealScore, Deal.id == DealScore.deal_id)
+        .where(Deal.in_stock == True)
+    )
+
+    # Apply user category filter from preferences
+    if user and user.preferences:
+        user_categories = user.preferences.get("categories", [])
+        if user_categories and len(user_categories) > 0:
+            query = query.where(Deal.category.in_(user_categories))
+
+    if category:
+        query = query.where(Deal.category == category)
+
+    # Order by flip_score (nulls last) and limit
+    query = query.order_by(DealScore.flip_score.desc().nullslast()).limit(limit)
+
+    result = await db.execute(query)
+    deals = result.scalars().unique().all()
+
+    return [deal_to_response(deal) for deal in deals]
+
+
+# ==================== MAIN LIST ENDPOINT ====================
+
 @router.get("", response_model=DealsListResponse)
 async def list_deals(
     page: int = Query(1, ge=1),
@@ -212,12 +418,10 @@ async def list_deals(
 
     # Apply sorting
     if sort_by == "flip_score":
-        # Need to join DealScore if not already joined
         if not needs_score_join:
             query = query.outerjoin(DealScore, Deal.id == DealScore.deal_id)
         order_col = DealScore.flip_score
     elif sort_by == "margin_pct":
-        # Need to join VintedStats if not already joined
         if not needs_vinted_join:
             query = query.outerjoin(VintedStats, Deal.id == VintedStats.deal_id)
         order_col = VintedStats.margin_pct
@@ -251,60 +455,8 @@ async def list_deals(
     )
 
 
-@router.get("/stats/summary")
-async def get_deals_stats(
-    db: AsyncSession = Depends(get_db),
-):
-    """Get deals statistics summary."""
-
-    # Total active deals
-    total_query = select(func.count(Deal.id)).where(Deal.in_stock == True)
-    total_result = await db.execute(total_query)
-    total_active = total_result.scalar() or 0
-
-    # Deals with good score (>= 70)
-    good_score_query = (
-        select(func.count(Deal.id))
-        .join(DealScore, Deal.id == DealScore.deal_id)
-        .where(and_(Deal.in_stock == True, DealScore.flip_score >= 70))
-    )
-    good_score_result = await db.execute(good_score_query)
-    good_deals = good_score_result.scalar() or 0
-
-    # New deals (last 24h)
-    yesterday = datetime.utcnow() - timedelta(hours=24)
-    new_query = select(func.count(Deal.id)).where(
-        and_(Deal.in_stock == True, Deal.first_seen_at >= yesterday)
-    )
-    new_result = await db.execute(new_query)
-    new_deals = new_result.scalar() or 0
-
-    # By source
-    source_query = (
-        select(Deal.source, func.count(Deal.id))
-        .where(Deal.in_stock == True)
-        .group_by(Deal.source)
-    )
-    source_result = await db.execute(source_query)
-    by_source = {row[0]: row[1] for row in source_result.fetchall()}
-
-    # By category
-    category_query = (
-        select(Deal.category, func.count(Deal.id))
-        .where(Deal.in_stock == True)
-        .group_by(Deal.category)
-    )
-    category_result = await db.execute(category_query)
-    by_category = {row[0] or "other": row[1] for row in category_result.fetchall()}
-
-    return {
-        "total_active": total_active,
-        "good_deals": good_deals,
-        "new_last_24h": new_deals,
-        "by_source": by_source,
-        "by_category": by_category,
-    }
-
+# ==================== DYNAMIC ROUTE LAST ====================
+# This must be AFTER all /stats/* and /top/* routes
 
 @router.get("/{deal_id}", response_model=DealResponse)
 async def get_deal(
@@ -330,48 +482,3 @@ async def get_deal(
         )
 
     return deal_to_response(deal)
-
-
-@router.get("/top/recommended", response_model=List[DealResponse])
-async def get_top_recommended_deals(
-    limit: int = Query(10, ge=1, le=50),
-    category: Optional[str] = None,
-    db: AsyncSession = Depends(get_db),
-    user: Optional[User] = Depends(get_current_user_optional),
-):
-    """Get top recommended deals by FlipScore."""
-
-    query = (
-        select(Deal)
-        .options(
-            selectinload(Deal.vinted_stats),
-            selectinload(Deal.deal_score),
-        )
-        .outerjoin(DealScore, Deal.id == DealScore.deal_id)
-        .where(Deal.in_stock == True)
-    )
-
-    # Apply user category filter from preferences
-    if user and user.preferences:
-        user_categories = user.preferences.get("categories", [])
-        if user_categories and len(user_categories) > 0:
-            query = query.where(Deal.category.in_(user_categories))
-
-    if category:
-        query = query.where(Deal.category == category)
-
-    # Filter for recommended deals if they have scores
-    query = query.where(
-        or_(
-            DealScore.recommended_action == "buy",
-            DealScore.id.is_(None)
-        )
-    )
-
-    # Order by flip_score (nulls last) and limit
-    query = query.order_by(DealScore.flip_score.desc().nullslast()).limit(limit)
-
-    result = await db.execute(query)
-    deals = result.scalars().unique().all()
-
-    return [deal_to_response(deal) for deal in deals]
