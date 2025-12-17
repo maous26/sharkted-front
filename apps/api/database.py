@@ -30,6 +30,9 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False
 )
 
+# Alias pour compatibilité
+async_session = AsyncSessionLocal
+
 # Base class
 class Base(DeclarativeBase):
     pass
