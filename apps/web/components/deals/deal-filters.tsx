@@ -19,13 +19,54 @@ const categories = [
 
 const brands = [
   { value: "", label: "Toutes marques" },
+  // Sneakers & Sport
   { value: "Nike", label: "Nike" },
   { value: "Adidas", label: "Adidas" },
   { value: "New Balance", label: "New Balance" },
   { value: "Jordan", label: "Jordan" },
-  { value: "Ralph Lauren", label: "Ralph Lauren" },
   { value: "Puma", label: "Puma" },
+  { value: "Asics", label: "Asics" },
+  { value: "Reebok", label: "Reebok" },
+  // Streetwear & Premium
+  { value: "Stone Island", label: "Stone Island" },
+  { value: "CP Company", label: "CP Company" },
+  { value: "The North Face", label: "The North Face" },
+  { value: "Carhartt WIP", label: "Carhartt WIP" },
+  { value: "Stussy", label: "Stussy" },
+  { value: "Supreme", label: "Supreme" },
+  // Luxe Accessible
+  { value: "Ralph Lauren", label: "Ralph Lauren" },
   { value: "Lacoste", label: "Lacoste" },
+  { value: "Tommy Hilfiger", label: "Tommy Hilfiger" },
+  { value: "Hugo Boss", label: "Hugo Boss" },
+  { value: "Calvin Klein", label: "Calvin Klein" },
+  // Outdoor & Heritage
+  { value: "Arc'teryx", label: "Arc'teryx" },
+  { value: "Patagonia", label: "Patagonia" },
+  { value: "Moncler", label: "Moncler" },
+  { value: "Timberland", label: "Timberland" },
+  { value: "Levi's", label: "Levi's" },
+];
+
+const sources = [
+  { value: "", label: "Toutes sources" },
+  // Sneakers
+  { value: "nike", label: "Nike" },
+  { value: "adidas", label: "Adidas" },
+  { value: "courir", label: "Courir" },
+  { value: "footlocker", label: "Foot Locker" },
+  { value: "snipes", label: "Snipes" },
+  { value: "size", label: "Size?" },
+  { value: "jdsports", label: "JD Sports" },
+  // Textile Premium
+  { value: "kith", label: "Kith" },
+  { value: "printemps", label: "Printemps" },
+  { value: "laredoute", label: "La Redoute" },
+  // Multi-catégories
+  { value: "zalando", label: "Zalando" },
+  { value: "end", label: "END." },
+  { value: "bstn", label: "BSTN" },
+  { value: "yoox", label: "YOOX" },
 ];
 
 const sortOptions = [
@@ -57,6 +98,7 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
   const [filters, setFilters] = useState({
     brand: "",
     category: "",
+    source: "",
     min_score: 0,
     min_margin: 0,
     max_price: "",
@@ -105,6 +147,7 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
 
     if (newFilters.brand) apiFilters.brand = newFilters.brand;
     if (newFilters.category) apiFilters.category = newFilters.category;
+    if (newFilters.source) apiFilters.source = newFilters.source;
     if (newFilters.min_score) apiFilters.min_score = newFilters.min_score;
     if (newFilters.min_margin) apiFilters.min_margin = newFilters.min_margin;
     if (newFilters.max_price) apiFilters.max_price = Number(newFilters.max_price);
@@ -126,6 +169,7 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     const defaultFilters = {
       brand: "",
       category: "",
+      source: "",
       min_score: 0,
       min_margin: 0,
       max_price: "",
@@ -142,6 +186,7 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
   const activeFiltersCount = [
     filters.brand,
     filters.category,
+    filters.source,
     filters.min_score > 0,
     filters.min_margin > 0,
     filters.max_price,
@@ -186,6 +231,24 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
             {categories.map((cat) => (
               <option key={cat.value} value={cat.value}>
                 {cat.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Source Filter */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Source
+          </label>
+          <select
+            value={filters.source}
+            onChange={(e) => handleChange("source", e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            {sources.map((source) => (
+              <option key={source.value} value={source.value}>
+                {source.label}
               </option>
             ))}
           </select>
@@ -456,6 +519,12 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
             <FilterChip
               label={categories.find(c => c.value === filters.category)?.label || filters.category}
               onRemove={() => handleChange("category", "")}
+            />
+          )}
+          {filters.source && (
+            <FilterChip
+              label={sources.find(s => s.value === filters.source)?.label || filters.source}
+              onRemove={() => handleChange("source", "")}
             />
           )}
           {filters.min_score > 0 && (

@@ -616,23 +616,31 @@ interface SourceBadgeProps {
 
 export function SourceBadge({ source, size = "md" }: SourceBadgeProps) {
   const sourceConfig: Record<string, { color: string; bg: string }> = {
+    // Sneakers specialists
     nike: { color: "text-gray-900", bg: "bg-gray-100" },
     adidas: { color: "text-black", bg: "bg-yellow-100" },
-    zalando: { color: "text-orange-600", bg: "bg-orange-100" },
     courir: { color: "text-blue-600", bg: "bg-blue-100" },
     footlocker: { color: "text-red-600", bg: "bg-red-100" },
     size: { color: "text-purple-600", bg: "bg-purple-100" },
     jdsports: { color: "text-black", bg: "bg-yellow-100" },
     snipes: { color: "text-orange-600", bg: "bg-orange-100" },
+    footpatrol: { color: "text-blue-700", bg: "bg-blue-100" },
+    // Textile premium
+    kith: { color: "text-black", bg: "bg-gray-200" },
+    printemps: { color: "text-pink-600", bg: "bg-pink-100" },
+    laredoute: { color: "text-red-600", bg: "bg-red-100" },
+    "la redoute": { color: "text-red-600", bg: "bg-red-100" },
+    // Multi-categories
+    zalando: { color: "text-orange-600", bg: "bg-orange-100" },
+    end: { color: "text-black", bg: "bg-gray-100" },
+    "end.": { color: "text-black", bg: "bg-gray-100" },
+    bstn: { color: "text-teal-600", bg: "bg-teal-100" },
+    yoox: { color: "text-green-600", bg: "bg-green-100" },
+    // Fashion
     "ralph lauren": { color: "text-blue-900", bg: "bg-blue-100" },
     ralphlauren: { color: "text-blue-900", bg: "bg-blue-100" },
     galerieslafayette: { color: "text-black", bg: "bg-gray-100" },
-    printemps: { color: "text-pink-600", bg: "bg-pink-100" },
-    kith: { color: "text-black", bg: "bg-gray-200" },
-    footpatrol: { color: "text-blue-700", bg: "bg-blue-100" },
     asos: { color: "text-black", bg: "bg-gray-100" },
-    laredoute: { color: "text-red-600", bg: "bg-red-100" },
-    "la redoute": { color: "text-red-600", bg: "bg-red-100" },
   };
 
   const config = sourceConfig[source.toLowerCase()] || { color: "text-gray-600", bg: "bg-gray-100" };
