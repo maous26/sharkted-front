@@ -46,24 +46,24 @@ api.interceptors.response.use(
 // ============================================================================
 export const authApi = {
   login: (data: { email: string; password: string }) =>
-    api.post("/auth/login", data),
+    api.post("/v1/users/login", data),
 
   register: (data: { email: string; password: string; name?: string }) =>
-    api.post("/auth/register", data),
+    api.post("/v1/users/register", data),
 
-  logout: () => api.post("/auth/logout"),
+  logout: () => api.post("/v1/users/logout"),
 
-  me: () => api.get("/auth/me"),
+  me: () => api.get("/v1/users/me"),
 
   // User preferences (categories)
-  getPreferences: () => api.get("/auth/me/preferences"),
+  getPreferences: () => api.get("/v1/users/me/preferences"),
 
   updatePreferences: (data: {
     categories?: string[];
     other_categories?: string;
-  }) => api.patch("/auth/me/preferences", data),
+  }) => api.patch("/v1/users/me/preferences", data),
 
-  getCategories: () => api.get("/auth/categories"),
+  getCategories: () => api.get("/v1/users/categories"),
 };
 
 // ============================================================================
