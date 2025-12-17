@@ -52,7 +52,13 @@ class Settings(BaseSettings):
     
     # CORS
     CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"],
+        default=[
+            "http://localhost:3000",
+            "http://localhost:8000",
+            "https://sharkted.fr",
+            "https://www.sharkted.fr",
+            "https://sharkted-front-production.up.railway.app"
+        ],
         env="CORS_ORIGINS"
     )
     
