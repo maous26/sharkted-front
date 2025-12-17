@@ -30,7 +30,7 @@ scikit-learn==1.4.0
 lightgbm==4.3.0
 
 # Utils
-pydantic==2.5.3
+pydantic[email]==2.5.3
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
 loguru==0.7.2
