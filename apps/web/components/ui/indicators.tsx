@@ -160,10 +160,10 @@ export function ProfitIndicator({
       ) : (
         <TrendingDown size={size === "sm" ? 12 : size === "md" ? 14 : 16} />
       )}
-      {marginEuro !== undefined && (
+      {marginEuro != null && (
         <span>+{marginEuro.toFixed(0)}EUR</span>
       )}
-      {marginPct !== undefined && (
+      {marginPct != null && (
         <span className="opacity-75">({marginPct.toFixed(0)}%)</span>
       )}
     </div>

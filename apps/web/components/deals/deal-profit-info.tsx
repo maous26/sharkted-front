@@ -21,7 +21,7 @@ export const DealProfitInfo = ({ deal }: DealProfitInfoProps) => {
     const marginPct = hasRealData ? vinted?.margin_pct : score?.estimated_margin_pct;
     const medianPrice = hasRealData ? vinted?.price_median : deal.score?.recommended_price;
 
-    if (marginEuro === undefined || marginPct === undefined) return null;
+    if (marginEuro == null || marginPct == null) return null;
 
     const isProfitable = marginEuro > 0;
 
