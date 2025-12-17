@@ -195,6 +195,14 @@ SCRAPING_SOURCES = {
         "priority": 1,
         "categories": ["textile", "sneakers", "accessoires"],
         "plan_required": "pro"
+    },
+    "asos": {
+        "name": "ASOS",
+        "base_url": "https://www.asos.com/fr/hommes/outlet/",
+        "enabled": True,
+        "priority": 2,
+        "categories": ["textile", "sneakers", "accessoires"],
+        "plan_required": "pro"
     }
 }
 

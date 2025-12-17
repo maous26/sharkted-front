@@ -13,6 +13,7 @@ from .bstn_scraper import BstnScraper
 from .snipes_scraper import SnipesScraper
 from .yoox_scraper import YooxScraper
 from .laredoute_scraper import LaRedouteScraper
+from .asos_scraper import AsosScraper
 # New textile scrapers
 from .kith_scraper import KithScraper
 from .printemps_scraper import PrintempsScraper
@@ -37,6 +38,7 @@ SCRAPERS_PRO = {
     "snipes": SnipesScraper,
     "yoox": YooxScraper,
     "laredoute": LaRedouteScraper,
+    "asos": AsosScraper,
     # New textile sources
     "kith": KithScraper,
     "printemps": PrintempsScraper,
