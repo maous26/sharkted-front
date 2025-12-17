@@ -73,6 +73,10 @@ const PROXY_DOMAINS = [
   "jdsports.",
   "snipes.",
   "demandware.static",
+  "asos.",
+  "laredoute.",
+  "printemps.",
+  "footpatrol.",
 ];
 
 export function proxyImageUrl(imageUrl: string | undefined | null): string {
