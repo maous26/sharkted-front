@@ -19,25 +19,21 @@ import { Button } from "@/components/ui/button";
 import { adminApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-interface SourceHealth {
-  source: string;
-  status: "healthy" | "warning" | "error";
-  last_success?: string;
-  consecutive_failures: number;
-  success_rate_24h: number;
-  last_error?: string;
+interface SourceDetail {
+  status: "ok" | "disabled" | "error" | "warning";
+  last_status?: string;
+  deals_found?: number;
+  deals_count?: number;
+  last_run?: string;
   needs_repair: boolean;
+  last_error?: string;
 }
 
 interface HealthResponse {
   status: string;
-  sources: SourceHealth[];
-  summary: {
-    total: number;
-    healthy: number;
-    warning: number;
-    error: number;
-  };
+  healthy_sources: string[];
+  sources_needing_repair: string[];
+  details: Record<string, SourceDetail>;
 }
 
 interface DiagnoseResult {
@@ -119,8 +115,21 @@ export function ScrapingHealthCheck() {
     return `il y a ${diffDays}j`;
   };
 
-  const sources = healthData?.sources || [];
-  const summary = healthData?.summary || { total: 0, healthy: 0, warning: 0, error: 0 };
+  // Transform API data to displayable format
+  const details = healthData?.details || {};
+  const sourcesList = Object.entries(details)
+    .filter(([, detail]) => detail.status !== "disabled")
+    .map(([source, detail]) => ({
+      source,
+      ...detail,
+    }));
+
+  const summary = {
+    total: Object.keys(details).filter((s) => details[s].status !== "disabled").length,
+    healthy: healthData?.healthy_sources?.length || 0,
+    warning: sourcesList.filter((s) => s.last_status === "partial").length,
+    error: healthData?.sources_needing_repair?.length || 0,
+  };
   const hasErrors = summary.error > 0 || summary.warning > 0;
 
   return (
@@ -184,146 +193,149 @@ export function ScrapingHealthCheck() {
           <div className="flex justify-center py-8">
             <RefreshCw className="animate-spin text-gray-400" size={24} />
           </div>
-        ) : sources.length === 0 ? (
+        ) : sourcesList.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Activity size={48} className="mx-auto mb-4 opacity-50" />
             <p>Aucune source configuree</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {sources.map((source) => (
-              <div
-                key={source.source}
-                className={cn(
-                  "border rounded-lg overflow-hidden transition-all",
-                  source.status === "error"
-                    ? "border-red-200 bg-red-50/30"
-                    : source.status === "warning"
-                    ? "border-yellow-200 bg-yellow-50/30"
-                    : "border-green-200 bg-green-50/30"
-                )}
-              >
-                {/* Source Header */}
+            {sourcesList.map((source) => {
+              const displayStatus =
+                source.status === "ok"
+                  ? source.last_status === "partial"
+                    ? "warning"
+                    : "healthy"
+                  : source.status === "error"
+                  ? "error"
+                  : "warning";
+              const dealsCount = source.deals_found || source.deals_count || 0;
+
+              return (
                 <div
-                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/50"
-                  onClick={() =>
-                    setExpandedSource(expandedSource === source.source ? null : source.source)
-                  }
+                  key={source.source}
+                  className={cn(
+                    "border rounded-lg overflow-hidden transition-all",
+                    displayStatus === "error"
+                      ? "border-red-200 bg-red-50/30"
+                      : displayStatus === "warning"
+                      ? "border-yellow-200 bg-yellow-50/30"
+                      : "border-green-200 bg-green-50/30"
+                  )}
                 >
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(source.status)}
-                    <div>
-                      <p className="font-medium text-sm sm:text-base capitalize">
-                        {source.source}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <Clock size={12} />
-                        {formatTimeAgo(source.last_success)}
-                        <span className="hidden sm:inline">
-                          | Taux: {source.success_rate_24h.toFixed(0)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "px-2 py-0.5 text-xs rounded-full border",
-                        getStatusBadge(source.status)
-                      )}
-                    >
-                      {source.status === "healthy"
-                        ? "OK"
-                        : source.status === "warning"
-                        ? "Warn"
-                        : "Err"}
-                    </span>
-
-                    {source.needs_repair && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDiagnose(source.source);
-                        }}
-                        disabled={diagnosing === source.source}
-                        className="h-7 px-2 text-xs"
-                      >
-                        {diagnosing === source.source ? (
-                          <RefreshCw size={12} className="animate-spin" />
-                        ) : (
-                          <Zap size={12} />
-                        )}
-                      </Button>
-                    )}
-
-                    {expandedSource === source.source ? (
-                      <ChevronUp size={16} className="text-gray-400" />
-                    ) : (
-                      <ChevronDown size={16} className="text-gray-400" />
-                    )}
-                  </div>
-                </div>
-
-                {/* Expanded Details */}
-                {expandedSource === source.source && (
-                  <div className="border-t p-3 bg-white/70 space-y-2 text-sm">
-                    <div className="grid grid-cols-2 gap-2">
+                  {/* Source Header */}
+                  <div
+                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/50"
+                    onClick={() =>
+                      setExpandedSource(expandedSource === source.source ? null : source.source)
+                    }
+                  >
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(displayStatus)}
                       <div>
-                        <span className="text-gray-500">Echecs consecutifs:</span>
-                        <span
-                          className={cn(
-                            "ml-2 font-medium",
-                            source.consecutive_failures > 0 ? "text-red-600" : "text-green-600"
-                          )}
-                        >
-                          {source.consecutive_failures}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Taux de succes (24h):</span>
-                        <span
-                          className={cn(
-                            "ml-2 font-medium",
-                            source.success_rate_24h >= 80
-                              ? "text-green-600"
-                              : source.success_rate_24h >= 50
-                              ? "text-yellow-600"
-                              : "text-red-600"
-                          )}
-                        >
-                          {source.success_rate_24h.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {source.last_error && (
-                      <div className="p-2 bg-red-50 rounded text-xs">
-                        <span className="text-red-600 font-medium">Derniere erreur: </span>
-                        <span className="text-red-700">{source.last_error}</span>
-                      </div>
-                    )}
-
-                    {/* Diagnosis Result */}
-                    {diagnoseResult[source.source] && (
-                      <div className="p-2 bg-blue-50 rounded text-xs space-y-1">
-                        <p className="font-medium text-blue-700">Diagnostic:</p>
-                        <p className="text-blue-600">
-                          {diagnoseResult[source.source].diagnosis}
+                        <p className="font-medium text-sm sm:text-base capitalize">
+                          {source.source}
                         </p>
-                        {diagnoseResult[source.source].suggested_fix && (
-                          <p className="text-blue-500 italic">
-                            Fix: {diagnoseResult[source.source].suggested_fix}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Clock size={12} />
+                          {formatTimeAgo(source.last_run)}
+                          <span className="hidden sm:inline">| {dealsCount} deals</span>
+                        </div>
                       </div>
-                    )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 text-xs rounded-full border",
+                          getStatusBadge(displayStatus)
+                        )}
+                      >
+                        {displayStatus === "healthy"
+                          ? "OK"
+                          : displayStatus === "warning"
+                          ? "Warn"
+                          : "Err"}
+                      </span>
+
+                      {source.needs_repair && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDiagnose(source.source);
+                          }}
+                          disabled={diagnosing === source.source}
+                          className="h-7 px-2 text-xs"
+                        >
+                          {diagnosing === source.source ? (
+                            <RefreshCw size={12} className="animate-spin" />
+                          ) : (
+                            <Zap size={12} />
+                          )}
+                        </Button>
+                      )}
+
+                      {expandedSource === source.source ? (
+                        <ChevronUp size={16} className="text-gray-400" />
+                      ) : (
+                        <ChevronDown size={16} className="text-gray-400" />
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* Expanded Details */}
+                  {expandedSource === source.source && (
+                    <div className="border-t p-3 bg-white/70 space-y-2 text-sm">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-gray-500">Dernier statut:</span>
+                          <span
+                            className={cn(
+                              "ml-2 font-medium capitalize",
+                              source.last_status === "success"
+                                ? "text-green-600"
+                                : source.last_status === "partial"
+                                ? "text-yellow-600"
+                                : "text-red-600"
+                            )}
+                          >
+                            {source.last_status || "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Deals trouves:</span>
+                          <span className="ml-2 font-medium text-gray-900">{dealsCount}</span>
+                        </div>
+                      </div>
+
+                      {source.last_error && (
+                        <div className="p-2 bg-red-50 rounded text-xs">
+                          <span className="text-red-600 font-medium">Derniere erreur: </span>
+                          <span className="text-red-700">{source.last_error}</span>
+                        </div>
+                      )}
+
+                      {/* Diagnosis Result */}
+                      {diagnoseResult[source.source] && (
+                        <div className="p-2 bg-blue-50 rounded text-xs space-y-1">
+                          <p className="font-medium text-blue-700">Diagnostic:</p>
+                          <p className="text-blue-600">
+                            {diagnoseResult[source.source].diagnosis}
+                          </p>
+                          {diagnoseResult[source.source].suggested_fix && (
+                            <p className="text-blue-500 italic">
+                              Fix: {diagnoseResult[source.source].suggested_fix}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
