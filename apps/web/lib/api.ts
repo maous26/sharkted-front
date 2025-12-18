@@ -204,15 +204,15 @@ export const outcomesApi = {
 // ============================================================================
 export const adminApi = {
   stats: () => api.get("/v1/admin/stats"),
-  
+
   // Users
   users: () => api.get("/v1/admin/users"),
   updateUserPlan: (userId: number, plan: string) => api.patch(`/v1/admin/users/${userId}/plan`, { plan }),
   deleteUser: (userId: number) => api.delete(`/v1/admin/users/${userId}`),
-  
+
   // Subscription tiers
   subscriptionTiers: () => api.get("/v1/admin/subscription-tiers"),
-  
+
   // Proxies
   proxies: () => api.get("/v1/admin/proxies"),
   createProxy: (data: {
@@ -232,11 +232,17 @@ export const adminApi = {
   updateProxy: (id: number, data: Record<string, unknown>) => api.patch(`/v1/admin/proxies/${id}`, data),
   deleteProxy: (id: number) => api.delete(`/v1/admin/proxies/${id}`),
   testProxy: (id: number) => api.post(`/v1/admin/proxies/${id}/test`),
-  
+
   // Proxy costs
   proxyCosts: (days?: number) => api.get("/v1/admin/proxy-costs", { params: { days } }),
-  proxyDecisionTest: (site: string, score?: number, hasAlert?: boolean) => 
+  proxyDecisionTest: (site: string, score?: number, hasAlert?: boolean) =>
     api.get("/v1/admin/proxy-decision-test", { params: { site, score, has_alert: hasAlert } }),
+
+  // Scraping Health Check & Auto-repair
+  scrapingHealth: () => api.get("/v1/admin/scraping/health"),
+  scrapingFailures: () => api.get("/v1/admin/scraping/failures"),
+  diagnoseSource: (source: string) => api.post(`/v1/admin/scraping/diagnose/${source}`),
+  repairAllSources: () => api.post("/v1/admin/scraping/repair-all"),
 };
 
 

@@ -40,6 +40,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 import { ProxyManager } from "@/components/admin/ProxyManager";
 import { UserManager } from "@/components/admin/UserManager";
+import { ScrapingHealthCheck } from "@/components/admin/ScrapingHealthCheck";
 interface ScrapingSource {
   id: string;
   name: string;
@@ -946,6 +947,9 @@ export default function AdminPage() {
             <ProxyManager />
           </CardContent>
         </Card>
+
+        {/* Scraping Health Check */}
+        <ScrapingHealthCheck />
 
         {/* Sources Management */}
         <Card>
