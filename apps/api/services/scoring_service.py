@@ -441,25 +441,53 @@ Donne une explication de 2-3 phrases maximum, factuelle et actionnable. Pas de p
 # Instance singleton
 scoring_engine = ScoringEngine()
 
+# Import ML scoring si disponible
+try:
+    from services.ml_scoring_service import ml_score_deal, ml_scoring_engine
+    ML_SCORING_AVAILABLE = True
+except ImportError:
+    ML_SCORING_AVAILABLE = False
+    logger.warning("ML scoring non disponible, utilisation des règles")
+
 
 async def score_deal(
     deal_data: Dict[str, Any],
-    vinted_stats: Dict[str, Any]
+    vinted_stats: Dict[str, Any],
+    use_ml: bool = True
 ) -> Dict[str, Any]:
     """
     Fonction helper pour scorer un deal complet
+
+    Args:
+        deal_data: Données du deal
+        vinted_stats: Stats Vinted
+        use_ml: Utiliser le ML si disponible (défaut: True)
+
+    Returns:
+        Score complet avec toutes les métriques
     """
-    
+
+    # Essayer le ML d'abord si disponible et demandé
+    if use_ml and ML_SCORING_AVAILABLE:
+        try:
+            ml_result = await ml_score_deal(deal_data, vinted_stats)
+            if ml_result and ml_result.get("flip_score", 0) > 0:
+                logger.debug(f"Score ML utilisé: {ml_result['flip_score']}")
+                return ml_result
+        except Exception as e:
+            logger.warning(f"Erreur ML scoring, fallback règles: {e}")
+
+    # Fallback sur les règles
     margin_percent = vinted_stats.get("margin_percent", 0)
     margin_euro = vinted_stats.get("margin_euro", 0)
     nb_listings = vinted_stats.get("nb_listings", 0)
     liquidity_score = vinted_stats.get("liquidity_score", 0)
-    
+
     # Déterminer la catégorie
     category = f"{deal_data.get('category', 'sneakers')}_{deal_data.get('subcategory', 'lifestyle')}"
     if category not in CATEGORY_WEIGHTS:
         category = "sneakers_lifestyle"
-    
+
     # Calculer le FlipScore
     flip_score, components = scoring_engine.calculate_flip_score(
         margin_percent=margin_percent,
@@ -473,23 +501,23 @@ async def score_deal(
         sizes_available=deal_data.get("sizes_available"),
         color=deal_data.get("color")
     )
-    
+
     # Recommandation
     recommendation, confidence = scoring_engine.get_recommendation(
         flip_score, margin_percent, margin_euro
     )
-    
+
     # Prix recommandé
     recommended_prices = scoring_engine.calculate_recommended_price(vinted_stats)
-    
+
     # Estimation temps de vente
     estimated_days = scoring_engine.estimate_sell_days(
         flip_score, liquidity_score, category
     )
-    
+
     # Risques
     risks = scoring_engine.identify_risks(deal_data, vinted_stats)
-    
+
     # Explication
     deal_for_explanation = {
         **deal_data,
@@ -500,7 +528,7 @@ async def score_deal(
     explanation = await scoring_engine.generate_explanation(
         deal_for_explanation, components, flip_score, recommendation
     )
-    
+
     return {
         "flip_score": flip_score,
         "popularity_score": components["popularity_score"],
@@ -513,5 +541,12 @@ async def score_deal(
         "explanation": explanation,
         "risks": risks,
         "estimated_sell_days": estimated_days,
-        "model_version": "rules_v1"
+        "model_version": "rules_v1",
+        "score_breakdown": {
+            "discount_score": min(100, (deal_data.get("discount_percent", 0) or 0) * 1.5),
+            "margin_score": components["margin_score"],
+            "brand_score": components["popularity_score"],
+            "estimated_margin_pct": margin_percent,
+            "estimated_margin_euro": margin_euro
+        }
     }

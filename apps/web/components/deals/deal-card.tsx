@@ -3,21 +3,16 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, Eye, Zap, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { ExternalLink, Eye, Zap, AlertTriangle, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   SharkScoreCircle,
   ProfitIndicator,
-  PopularityIndicator,
-  LiquidityIndicator,
   TimeIndicator,
   ActionBadge,
   SourceBadge,
-  Sparkline,
-  ScoreBreakdown,
 } from "@/components/ui/indicators";
-import { DealProfitInfo } from "./deal-profit-info";
 
 import { formatPrice, cn, proxyImageUrl } from "@/lib/utils";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/use-favorites";
@@ -30,217 +25,8 @@ export interface DealCardProps {
   compact?: boolean;
 }
 
-// Composant pour afficher les details du scoring
-function ScoringDetails({ deal }: { deal: Deal }) {
-  const hasScore = deal.score && deal.score.flip_score > 0;
-
-  if (!hasScore) return null;
-
-  // Utilise les marges estimées du score autonome (plus de Vinted)
-  const marginPct = deal.score?.score_breakdown?.estimated_margin_pct || deal.vinted_stats?.margin_pct || 0;
-  const marginEuro = deal.score?.score_breakdown?.estimated_margin_euro || deal.vinted_stats?.margin_euro || 0;
-  const isPositiveMargin = marginPct > 0;
-
-  return (
-    <div className="mt-4 border-t border-gray-100 pt-4">
-      {/* Score Breakdown */}
-      {hasScore && deal.score?.score_breakdown && (
-        <div className="mb-4">
-          <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 flex items-center gap-1">
-            <Info size={12} />
-            Breakdown du Score
-          </h4>
-          <div className="grid grid-cols-2 gap-2">
-            {deal.score.score_breakdown.discount_score !== undefined && (
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">Remise</p>
-                <div className="flex items-center gap-1">
-                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${Math.min(deal.score.score_breakdown.discount_score, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium">{deal.score.score_breakdown.discount_score?.toFixed(0)}</span>
-                </div>
-              </div>
-            )}
-            {deal.score.score_breakdown.margin_score !== undefined && (
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">Marge</p>
-                <div className="flex items-center gap-1">
-                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={cn("h-full rounded-full", isPositiveMargin ? "bg-green-500" : "bg-orange-500")}
-                      style={{ width: `${Math.min(deal.score.score_breakdown.margin_score, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium">{deal.score.score_breakdown.margin_score?.toFixed(0)}</span>
-                </div>
-              </div>
-            )}
-            {/* Brand Score (remplace Liquidité Vinted) */}
-            {deal.score.score_breakdown.brand_score !== undefined && (
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">Marque</p>
-                <div className="flex items-center gap-1">
-                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500 rounded-full"
-                      style={{ width: `${Math.min(deal.score.score_breakdown.brand_score, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium">{deal.score.score_breakdown.brand_score?.toFixed(0)}</span>
-                </div>
-              </div>
-            )}
-            {/* Contextual Score */}
-            {deal.score.score_breakdown.contextual_score !== undefined && (
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">Contexte</p>
-                <div className="flex items-center gap-1">
-                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-cyan-500 rounded-full"
-                      style={{ width: `${Math.min(deal.score.score_breakdown.contextual_score, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium">{deal.score.score_breakdown.contextual_score?.toFixed(0)}</span>
-                </div>
-              </div>
-            )}
-            {deal.score.score_breakdown.popularity_score !== undefined && (
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">Popularité</p>
-                <div className="flex items-center gap-1">
-                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-pink-500 rounded-full"
-                      style={{ width: `${Math.min(deal.score.score_breakdown.popularity_score, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium">{deal.score.score_breakdown.popularity_score?.toFixed(0)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Marge et prix recommandé - utilise les marges estimées du scoring autonome */}
-      {(marginPct !== 0 || deal.score?.recommended_price) && (
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              {isPositiveMargin ? (
-                <TrendingUp className="w-4 h-4 text-green-600" />
-              ) : (
-                <TrendingDown className="w-4 h-4 text-red-500" />
-              )}
-              <span className="text-sm font-semibold">
-                Marge estimée
-              </span>
-            </div>
-            <div className={cn(
-              "text-lg font-bold",
-              isPositiveMargin ? "text-green-600" : "text-red-500"
-            )}>
-              {isPositiveMargin ? "+" : ""}{marginPct.toFixed(1)}%
-              <span className="text-xs ml-1 text-gray-500">
-                ({isPositiveMargin ? "+" : ""}{marginEuro.toFixed(2)}€)
-              </span>
-            </div>
-          </div>
-
-          {/* Prix de vente recommandé */}
-          {deal.score?.recommended_price && deal.score.recommended_price > 0 && (
-            <div className="flex items-center justify-between text-sm border-t border-gray-200 pt-2 mt-2">
-              <span className="text-gray-600">Prix de vente optimal</span>
-              <span className="font-semibold text-primary-600">
-                {formatPrice(deal.score.recommended_price)}
-              </span>
-            </div>
-          )}
-
-          {/* Fourchette de prix */}
-          {deal.score?.recommended_price_range && (
-            <div className="grid grid-cols-3 gap-2 mt-2 text-center text-xs">
-              {deal.score.recommended_price_range.aggressive && (
-                <div className="bg-white/60 rounded p-1">
-                  <p className="text-gray-500">Rapide</p>
-                  <p className="font-medium">{formatPrice(deal.score.recommended_price_range.aggressive)}</p>
-                </div>
-              )}
-              {deal.score.recommended_price_range.optimal && (
-                <div className="bg-white/60 rounded p-1">
-                  <p className="text-gray-500">Optimal</p>
-                  <p className="font-semibold text-primary-600">{formatPrice(deal.score.recommended_price_range.optimal)}</p>
-                </div>
-              )}
-              {deal.score.recommended_price_range.patient && (
-                <div className="bg-white/60 rounded p-1">
-                  <p className="text-gray-500">Patient</p>
-                  <p className="font-medium">{formatPrice(deal.score.recommended_price_range.patient)}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Modèle de scoring */}
-      {deal.score?.model_version && (
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs text-gray-500">Scoring:</span>
-          <span className={cn(
-            "text-xs font-medium px-2 py-0.5 rounded-full",
-            deal.score.model_version === "autonomous_v3"
-              ? "bg-blue-100 text-blue-700"
-              : "bg-gray-100 text-gray-600"
-          )}>
-            {deal.score.model_version === "autonomous_v3"
-              ? "Autonome v3"
-              : deal.score.model_version}
-          </span>
-        </div>
-      )}
-
-      {/* Risques */}
-      {deal.score?.risks && deal.score.risks.length > 0 && (
-        <div className="mb-3">
-          <h4 className="text-xs font-semibold text-orange-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-            <AlertTriangle size={12} />
-            Risques
-          </h4>
-          <ul className="text-xs text-gray-600 space-y-1">
-            {deal.score.risks.map((risk, idx) => (
-              <li key={idx} className="flex items-start gap-1">
-                <span className="text-orange-400 mt-0.5">•</span>
-                <span>{risk}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Confidence et Model */}
-      <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-2">
-        {deal.score?.confidence && (
-          <span>Confiance: {(deal.score.confidence * 100).toFixed(0)}%</span>
-        )}
-        {deal.score?.model_version && (
-          <span className="bg-gray-100 px-2 py-0.5 rounded text-[10px]">
-            {deal.score.model_version}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export function DealCard({ deal, isNew = false }: DealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const { isAuthenticated } = useAuth();
   const { data: favoriteIds = [] } = useFavoriteIds();
   const { toggleFavorite, isLoading: isFavoriteLoading } = useToggleFavorite();
@@ -248,13 +34,6 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
   const dealIdNum = parseInt(deal.id, 10);
   const isFavorite = favoriteIds.includes(dealIdNum);
   const hasScore = deal.score && deal.score.flip_score > 0;
-  // Scoring autonome - plus besoin de vinted_stats
-  const hasMarginData = hasScore && (deal.score?.score_breakdown?.estimated_margin_pct !== undefined);
-
-  // Données de tendance simulées pour le sparkline
-  const trendData = hasScore
-    ? [65, 70, 68, 75, 72, 80, deal.score?.flip_score || 75]
-    : [];
 
   // Couleur de bordure selon la recommandation
   const borderColor = deal.score?.recommended_action === "buy"
@@ -398,118 +177,109 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
           )}
         </div>
 
-        {/* Indicateurs de decision - Scoring Autonome */}
+        {/* Bloc Scoring Simplifié - Toutes les infos importantes */}
         {hasScore && (
-          <div className="space-y-3 mb-4">
-            {/* Profit & Market Info (Vinted vs Estimated) */}
-            <div className="mb-2">
-              <DealProfitInfo deal={deal} />
-            </div>
-
-            {/* Separator if needed, but DealProfitInfo includes its own box */}
-
-            {/* Score Marque (remplace Liquidité Vinted) */}
-            {deal.score?.score_breakdown?.brand_score !== undefined && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Marque</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500 rounded-full"
-                      style={{ width: `${deal.score.score_breakdown.brand_score}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium">{deal.score.score_breakdown.brand_score?.toFixed(0)}</span>
+          <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-3 mb-4 border border-gray-100">
+            {/* FlipScore + Marge principale */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <SharkScoreCircle score={deal.score!.flip_score} size="sm" showLabel={false} />
+                <div>
+                  <p className="text-xs text-gray-500">FlipScore</p>
+                  <p className="text-lg font-bold text-gray-900">{deal.score!.flip_score}</p>
                 </div>
               </div>
-            )}
-
-            {/* Tendance / Popularite */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Demande</span>
-              <div className="flex items-center gap-2">
-                {trendData.length > 0 && (
-                  <Sparkline
-                    data={trendData}
-                    width={50}
-                    height={16}
-                    color={deal.score!.flip_score >= 70 ? "#22c55e" : "#eab308"}
-                  />
-                )}
-                <PopularityIndicator
-                  score={deal.score!.confidence || 60}
-                  size="sm"
-                />
+              <div className="text-right">
+                <p className="text-xs text-gray-500">Profit estimé</p>
+                <p className={cn(
+                  "text-lg font-bold",
+                  (deal.score?.score_breakdown?.estimated_margin_pct || 0) >= 0 ? "text-green-600" : "text-red-500"
+                )}>
+                  {deal.score?.score_breakdown?.estimated_margin_pct
+                    ? `${(deal.score.score_breakdown.estimated_margin_pct >= 0 ? "+" : "")}${deal.score.score_breakdown.estimated_margin_pct.toFixed(0)}%`
+                    : "—"}
+                  {deal.score?.score_breakdown?.estimated_margin_euro && (
+                    <span className="text-xs ml-1 text-gray-500">
+                      ({deal.score.score_breakdown.estimated_margin_euro >= 0 ? "+" : ""}{deal.score.score_breakdown.estimated_margin_euro.toFixed(0)}€)
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Stats Scoring Autonome */}
-        {hasScore && (
-          <div className="bg-gray-50 rounded-lg p-3 mb-4">
-            <div className="grid grid-cols-3 gap-2 text-center">
+            {/* Stats clés en ligne */}
+            <div className="grid grid-cols-3 gap-2 text-center py-2 border-t border-gray-200/50">
               <div>
-                <p className="text-[10px] text-gray-500 uppercase">Prix revente</p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-[10px] text-gray-500 uppercase">Revente</p>
+                <p className="text-sm font-semibold text-gray-900">
                   {deal.score?.recommended_price ? formatPrice(deal.score.recommended_price) : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase">Marge</p>
-                <p className={cn(
-                  "text-sm font-bold",
-                  (deal.score?.score_breakdown?.estimated_margin_pct || 0) >= 0 ? "text-green-600" : "text-red-500"
-                )}>
-                  {deal.score?.score_breakdown?.estimated_margin_pct
-                    ? `${deal.score.score_breakdown.estimated_margin_pct.toFixed(0)}%`
-                    : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-500 uppercase">Délai vente</p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-[10px] text-gray-500 uppercase">Délai</p>
+                <p className="text-sm font-semibold text-gray-900">
                   ~{deal.score?.estimated_sell_days || "?"}j
                 </p>
               </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase">Confiance</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {deal.score?.confidence ? `${(deal.score.confidence * 100).toFixed(0)}%` : "—"}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* Score Breakdown - Transparence sur le scoring */}
-        {hasScore && (deal.score!.margin_score || deal.score!.liquidity_score || deal.score!.popularity_score) && (
-          <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 mb-4">
-            <ScoreBreakdown
-              marginScore={deal.score!.margin_score}
-              liquidityScore={deal.score!.liquidity_score}
-              popularityScore={deal.score!.popularity_score}
-              breakdown={deal.score!.score_breakdown}
-            />
-          </div>
-        )}
-
-        {/* Bouton pour afficher les details du scoring */}
-        {hasScore && (
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-2 border-t border-gray-100 transition-colors"
-          >
-            {showDetails ? (
-              <>
-                <ChevronUp size={14} />
-                Masquer les détails
-              </>
-            ) : (
-              <>
-                <ChevronDown size={14} />
-                Voir les détails du scoring
-              </>
+            {/* Scores détaillés (barres compactes) */}
+            {deal.score?.score_breakdown && (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2 pt-2 border-t border-gray-200/50">
+                {deal.score.score_breakdown.discount_score !== undefined && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-gray-500 w-12">Remise</span>
+                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(deal.score.score_breakdown.discount_score, 100)}%` }} />
+                    </div>
+                  </div>
+                )}
+                {deal.score.score_breakdown.margin_score !== undefined && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-gray-500 w-12">Marge</span>
+                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", (deal.score.score_breakdown.estimated_margin_pct || 0) >= 0 ? "bg-green-500" : "bg-red-400")} style={{ width: `${Math.min(deal.score.score_breakdown.margin_score, 100)}%` }} />
+                    </div>
+                  </div>
+                )}
+                {deal.score.score_breakdown.brand_score !== undefined && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-gray-500 w-12">Marque</span>
+                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.min(deal.score.score_breakdown.brand_score, 100)}%` }} />
+                    </div>
+                  </div>
+                )}
+                {deal.score.score_breakdown.popularity_score !== undefined && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-gray-500 w-12">Demande</span>
+                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-pink-500 rounded-full" style={{ width: `${Math.min(deal.score.score_breakdown.popularity_score, 100)}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-          </button>
-        )}
 
-        {/* Scoring Details (collapsible) */}
-        {showDetails && <ScoringDetails deal={deal} />}
+            {/* Risques (si présents) */}
+            {deal.score?.risks && deal.score.risks.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-orange-200/50">
+                <div className="flex items-start gap-1.5">
+                  <AlertTriangle size={12} className="text-orange-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-[10px] text-orange-700 line-clamp-2">
+                    {deal.score.risks.slice(0, 2).join(" • ")}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-2 mt-4">
