@@ -62,34 +62,44 @@ export default function SettingsPage() {
               Le <strong>SharkScore</strong> est notre indicateur de 0 a 100 qui evalue le potentiel de profit d'un deal. Il est calcule automatiquement a partir de plusieurs criteres.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="p-4 bg-white rounded-lg border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Tag className="text-green-500" size={18} />
-                  <span className="font-medium text-gray-900">Remise</span>
+                  <span className="font-medium text-gray-900">Remise (30%)</span>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Pourcentage de reduction par rapport au prix original. Plus la remise est importante, plus le score augmente (40% du score)
+                  Pourcentage de reduction par rapport au prix original. Plus la remise est importante, plus le score augmente.
                 </p>
               </div>
 
               <div className="p-4 bg-white rounded-lg border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Award className="text-blue-500" size={18} />
-                  <span className="font-medium text-gray-900">Marque</span>
+                  <span className="font-medium text-gray-900">Marque (25%)</span>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Notoriete et demande de la marque sur le marche de la revente (Nike, Adidas, New Balance...) (25% du score)
+                  Notoriete et facilite de revente. Tier S (Nike, Jordan), Tier A (Adidas, New Balance), Tier B (Puma, Reebok).
                 </p>
               </div>
 
               <div className="p-4 bg-white rounded-lg border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="text-orange-500" size={18} />
-                  <span className="font-medium text-gray-900">Modele</span>
+                  <span className="font-medium text-gray-900">Contexte (20%)</span>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Popularite du modele specifique (Dunk, Air Force 1, 550...). Les modeles tendance ont un meilleur score (15% du score)
+                  Tailles disponibles (39-45 ideales), couleurs (noir/blanc = safe), et urgence promo.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="text-purple-500" size={18} />
+                  <span className="font-medium text-gray-900">Marge (25%)</span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Profit potentiel apres revente sur Vinted. Calcule avec les frais (13%) et l'envoi (~5€).
                 </p>
               </div>
             </div>
@@ -103,7 +113,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-red-700">A eviter</p>
-                    <p className="text-xs text-red-600">Remise insuffisante ou marque peu demandee</p>
+                    <p className="text-xs text-red-600">Marge insuffisante ou marque peu demandee</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50">
@@ -112,7 +122,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-yellow-700">Moyen</p>
-                    <p className="text-xs text-yellow-600">Opportunite moderee, a etudier</p>
+                    <p className="text-xs text-yellow-600">Opportunite a etudier, marge limitee</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50">
@@ -121,7 +131,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-green-700">Bon deal</p>
-                    <p className="text-xs text-green-600">Bonne remise sur une marque recherchee</p>
+                    <p className="text-xs text-green-600">Bonne marge sur une marque recherchee</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-primary-50">
@@ -130,23 +140,23 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-primary-700">Excellent</p>
-                    <p className="text-xs text-primary-600">Opportunite rare, agissez vite!</p>
+                    <p className="text-xs text-primary-600">Forte marge, agissez vite!</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-              <Info className="text-blue-500 flex-shrink-0 mt-0.5" size={18} />
-              <p className="text-sm text-blue-700">
-                <strong>Marche verifie :</strong> Quand disponible, le score est affine avec les prix reels sur Vinted pour calculer la marge exacte. Filtrez sur "Marche verifie" pour voir ces deals.
-              </p>
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
+              <Info className="text-green-600 flex-shrink-0 mt-0.5" size={18} />
+              <div className="text-sm text-green-700">
+                <strong>Badge VINTED :</strong> Les deals avec ce badge ont une marge calculee a partir des prix reels sur Vinted (produits "neuf avec etiquette"). Les autres ont une marge estimee algorithmiquement.
+              </div>
             </div>
 
             <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
               <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={18} />
               <p className="text-sm text-amber-700">
-                <strong>Conseil :</strong> Configurez vos alertes a 70+ pour recevoir uniquement les meilleures opportunites.
+                <strong>Conseil :</strong> Privilegiez les deals avec le badge VINTED et un SharkScore 70+. Ces opportunites ont une marge verifiee sur le marche reel.
               </p>
             </div>
           </CardContent>
