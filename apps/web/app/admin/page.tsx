@@ -148,13 +148,33 @@ export default function AdminPage() {
     enabled: isAuthenticated && isAdmin,
   });
 
-  // Fetch scraping sources
+  // Fetch deals stats (to get real deal counts per source)
+  const { data: dealsStats } = useQuery<{ by_source: Record<string, number> }>({
+    queryKey: ["admin", "deals-stats"],
+    queryFn: async () => {
+      try {
+        const { data } = await analyticsApi.dashboard();
+        return data;
+      } catch {
+        return { by_source: {} };
+      }
+    },
+    enabled: isAuthenticated && isAdmin,
+    refetchInterval: 30000,
+  });
+
+  // Fetch scraping sources and merge with real deal counts
   const { data: sources, isLoading: sourcesLoading } = useQuery<ScrapingSource[]>({
-    queryKey: ["admin", "sources"],
+    queryKey: ["admin", "sources", dealsStats],
     queryFn: async () => {
       try {
         const { data } = await scrapingApi.sources();
-        return data || [];
+        // Merge with real deal counts from stats
+        const sourcesWithRealCounts = (data || []).map((source: ScrapingSource) => ({
+          ...source,
+          total_deals_found: dealsStats?.by_source?.[source.slug] || source.total_deals_found || 0,
+        }));
+        return sourcesWithRealCounts;
       } catch {
         return [];
       }
