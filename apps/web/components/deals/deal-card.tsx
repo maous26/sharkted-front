@@ -190,7 +190,19 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-500">Profit estimé</p>
+                {/* Badge source des données */}
+                <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
+                  Profit
+                  {deal.vinted_stats ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-700">
+                      VINTED
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-500">
+                      ESTIMÉ
+                    </span>
+                  )}
+                </p>
                 <p className={cn(
                   "text-lg font-bold",
                   (deal.score?.score_breakdown?.estimated_margin_pct || 0) >= 0 ? "text-green-600" : "text-red-500"
