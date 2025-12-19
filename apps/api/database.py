@@ -358,10 +358,10 @@ class ScrapingLog(Base):
     source_slug: Mapped[str] = mapped_column(String(50), nullable=False)
     source_name: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    # Status
-    status: Mapped[ScrapingLogStatus] = mapped_column(
-        SQLEnum(ScrapingLogStatus),
-        default=ScrapingLogStatus.STARTED
+    # Status (stored as VARCHAR in DB)
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="started"
     )
 
     # Timing

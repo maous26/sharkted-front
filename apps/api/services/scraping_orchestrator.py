@@ -138,7 +138,7 @@ class ScrapingOrchestrator:
         scraping_log = ScrapingLog(
             source_slug=source_name,
             source_name=source_display_name,
-            status=ScrapingLogStatus.STARTED,
+            status="started",
             triggered_by=triggered_by,
             proxy_used=proxy_used,
         )
@@ -149,7 +149,7 @@ class ScrapingOrchestrator:
 
         try:
             # Update log status to in_progress
-            scraping_log.status = ScrapingLogStatus.IN_PROGRESS
+            scraping_log.status = "in_progress"
             await self.db.flush()
 
             # Run scraper with proxy
@@ -166,7 +166,7 @@ class ScrapingOrchestrator:
 
             # Update log with success
             end_time = datetime.utcnow()
-            scraping_log.status = ScrapingLogStatus.COMPLETED
+            scraping_log.status = "completed"
             scraping_log.completed_at = end_time
             scraping_log.duration_seconds = (end_time - start_time).total_seconds()
             scraping_log.deals_found = len(products)

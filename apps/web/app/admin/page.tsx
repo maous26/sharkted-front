@@ -269,10 +269,6 @@ export default function AdminPage() {
 
   const handleRunScraping = (sourcesToRun?: string[]) => {
     console.log("🚀 handleRunScraping called with:", sourcesToRun);
-    // DEBUG: Alert pour vérifier que le clic fonctionne
-    if (typeof window !== "undefined") {
-      window.alert("Scraping lancé pour: " + (sourcesToRun?.join(", ") || "toutes les sources"));
-    }
     setScrapingMessage(null);
     setIsRunningScrap(true);
     runScrapingMutation.mutate(sourcesToRun);
@@ -945,20 +941,7 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        {/* Proxies Management */}
-        <Card>
-          <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Network size={18} className="text-purple-500" />
-              Proxies & Web Unlocker
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <ProxyManager />
-          </CardContent>
-        </Card>
-
-        {/* Scraping Health Check */}
+        {/* Scraping Health Check with Auto-Repair */}
         <ScrapingHealthCheck />
 
         {/* Sources Management */}
@@ -1146,7 +1129,6 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-
         {/* Proxies Management */}
         <Card>
           <CardHeader className="p-4 sm:p-6">
@@ -1155,7 +1137,7 @@ export default function AdminPage() {
               Proxies & Web Unlocker
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0">
             <ProxyManager />
           </CardContent>
         </Card>

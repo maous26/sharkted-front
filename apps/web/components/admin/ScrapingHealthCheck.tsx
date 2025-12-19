@@ -150,21 +150,27 @@ export function ScrapingHealthCheck() {
             <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
             <span className="hidden sm:inline">Actualiser</span>
           </Button>
-          {hasErrors && (
-            <Button
-              size="sm"
-              onClick={() => repairAllMutation.mutate()}
-              disabled={repairAllMutation.isPending}
-              className="gap-1 bg-orange-500 hover:bg-orange-600"
-            >
-              {repairAllMutation.isPending ? (
-                <RefreshCw size={14} className="animate-spin" />
-              ) : (
-                <Wrench size={14} />
-              )}
-              <span className="hidden sm:inline">Auto-Repair</span>
-            </Button>
-          )}
+          <Button
+            size="sm"
+            onClick={() => {
+              console.log("🔧 Auto-Repair clicked");
+              repairAllMutation.mutate();
+            }}
+            disabled={repairAllMutation.isPending}
+            className={cn(
+              "gap-1",
+              hasErrors
+                ? "bg-orange-500 hover:bg-orange-600"
+                : "bg-blue-500 hover:bg-blue-600"
+            )}
+          >
+            {repairAllMutation.isPending ? (
+              <RefreshCw size={14} className="animate-spin" />
+            ) : (
+              <Wrench size={14} />
+            )}
+            <span className="hidden sm:inline">Auto-Repair</span>
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
