@@ -269,7 +269,10 @@ export default function AdminPage() {
 
   const handleRunScraping = (sourcesToRun?: string[]) => {
     console.log("🚀 handleRunScraping called with:", sourcesToRun);
-    alert("Scraping lancé pour: " + (sourcesToRun?.join(", ") || "toutes les sources"));
+    // DEBUG: Alert pour vérifier que le clic fonctionne
+    if (typeof window !== "undefined") {
+      window.alert("Scraping lancé pour: " + (sourcesToRun?.join(", ") || "toutes les sources"));
+    }
     setScrapingMessage(null);
     setIsRunningScrap(true);
     runScrapingMutation.mutate(sourcesToRun);
