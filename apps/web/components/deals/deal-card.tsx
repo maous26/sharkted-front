@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, Eye, Zap, CheckCircle } from "lucide-react";
+import { ExternalLink, Eye, Zap, CheckCircle, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,13 +27,37 @@ export interface DealCardProps {
 
 export function DealCard({ deal, isNew = false }: DealCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const [isRescoring, setIsRescoring] = useState(false);
+  const { isAuthenticated, user } = useAuth();
   const { data: favoriteIds = [] } = useFavoriteIds();
   const { toggleFavorite, isLoading: isFavoriteLoading } = useToggleFavorite();
 
   const dealIdNum = parseInt(deal.id, 10);
   const isFavorite = favoriteIds.includes(dealIdNum);
   const hasScore = deal.score && deal.score.flip_score > 0;
+  const isAdmin = user?.plan === "admin";
+
+  const handleRescore = async () => {
+    if (isRescoring) return;
+    setIsRescoring(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/scoring/score/${dealIdNum}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        // Refresh the page to see updated data
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Rescore error:", error);
+    } finally {
+      setIsRescoring(false);
+    }
+  };
 
   // Couleur de bordure selon la recommandation
   const borderColor = deal.score?.recommended_action === "buy"
@@ -308,6 +332,20 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
             </Button>
           </Link>
         </div>
+
+        {/* Admin: Rescore button */}
+        {isAdmin && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-2 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            onClick={handleRescore}
+            disabled={isRescoring}
+          >
+            <RefreshCw size={14} className={cn("mr-1.5", isRescoring && "animate-spin")} />
+            {isRescoring ? "Analyse en cours..." : "Reanalyser les prix"}
+          </Button>
+        )}
 
         {/* Explication courte */}
         {deal.score?.explanation_short && (
