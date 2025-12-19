@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, Search, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
+import { X, Search, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -103,8 +103,6 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     min_margin: 0,
     max_price: "",
     sort_by: "detected_at",
-    recommended_only: false,
-    positive_margin: false, // Marge > 0%
   });
 
   // Handle ESC key to close mobile drawer
@@ -150,8 +148,6 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     if (newFilters.min_score) apiFilters.min_score = newFilters.min_score;
     if (newFilters.min_margin) apiFilters.min_margin = newFilters.min_margin;
     if (newFilters.max_price) apiFilters.max_price = Number(newFilters.max_price);
-    if (newFilters.recommended_only) apiFilters.recommended_only = true;
-    if (newFilters.positive_margin) apiFilters.min_margin = 1; // Marge > 0%
     if (newFilters.search) apiFilters.search = newFilters.search;
 
     onFiltersChange(apiFilters);
@@ -172,8 +168,6 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
       min_margin: 0,
       max_price: "",
       sort_by: "detected_at",
-      recommended_only: false,
-      positive_margin: false,
     };
     setFilters(defaultFilters);
     setSearchQuery("");
@@ -187,8 +181,6 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     filters.min_score > 0,
     filters.min_margin > 0,
     filters.max_price,
-    filters.recommended_only,
-    filters.positive_margin,
     searchQuery,
   ].filter(Boolean).length;
 
@@ -370,36 +362,6 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
             />
           </div>
 
-          {/* Buy Only Toggle - Hidden text on mobile */}
-          <button
-            onClick={() => handleChange("recommended_only", !filters.recommended_only)}
-            className={cn(
-              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex-shrink-0 whitespace-nowrap",
-              filters.recommended_only
-                ? "bg-green-500 border-green-500 text-white"
-                : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
-            )}
-          >
-            {filters.recommended_only && <Check size={14} />}
-            <span className="hidden sm:inline">Acheter uniquement</span>
-            <span className="sm:hidden">Acheter</span>
-          </button>
-
-          {/* Positive Margin Toggle */}
-          <button
-            onClick={() => handleChange("positive_margin", !filters.positive_margin)}
-            className={cn(
-              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex-shrink-0 whitespace-nowrap",
-              filters.positive_margin
-                ? "bg-green-500 border-green-500 text-white"
-                : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
-            )}
-          >
-            {filters.positive_margin && <Check size={14} />}
-            <span className="hidden sm:inline">Marge positive</span>
-            <span className="sm:hidden">Marge +</span>
-          </button>
-
           {/* More Filters Toggle - Opens drawer on mobile */}
           <button
             onClick={() => {
@@ -524,12 +486,6 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
             <FilterChip
               label={`<${filters.max_price}€`}
               onRemove={() => handleChange("max_price", "")}
-            />
-          )}
-          {filters.positive_margin && (
-            <FilterChip
-              label="Marge positive"
-              onRemove={() => handleChange("positive_margin", false)}
             />
           )}
           {searchQuery && (
