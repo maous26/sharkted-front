@@ -117,7 +117,7 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         {/* Time Indicator - Bottom Left */}
         <div className="absolute bottom-3 left-3 z-10">
           <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1">
-            <TimeIndicator date={deal.detected_at} size="sm" />
+            <TimeIndicator date={deal.detected_at} size="sm" showExactDate />
           </div>
         </div>
 
@@ -380,7 +380,7 @@ export function DealCardCompact({ deal, isNew = false }: DealCardProps) {
           {deal.score?.score_breakdown?.estimated_margin_pct && (
             <ProfitIndicator marginPct={deal.score.score_breakdown.estimated_margin_pct} size="sm" />
           )}
-          <TimeIndicator date={deal.detected_at} size="sm" />
+          <TimeIndicator date={deal.detected_at} size="sm" showExactDate />
         </div>
       </div>
 

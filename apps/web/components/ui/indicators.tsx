@@ -262,12 +262,14 @@ export function RarityIndicator({
 interface TimeIndicatorProps {
   date: Date | string;
   showUrgent?: boolean;
+  showExactDate?: boolean;
   size?: "sm" | "md" | "lg";
 }
 
 export function TimeIndicator({
   date,
   showUrgent = true,
+  showExactDate = false,
   size = "md",
 }: TimeIndicatorProps) {
   const now = new Date();
@@ -286,6 +288,15 @@ export function TimeIndicator({
     if (seconds < 3600) return `${Math.floor(seconds / 60)}min`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
     return `${Math.floor(seconds / 86400)}j`;
+  };
+
+  const getExactDate = () => {
+    const day = then.getDate();
+    const months = ["jan", "fév", "mar", "avr", "mai", "jun", "jul", "aoû", "sep", "oct", "nov", "déc"];
+    const month = months[then.getMonth()];
+    const hours = then.getHours().toString().padStart(2, "0");
+    const minutes = then.getMinutes().toString().padStart(2, "0");
+    return `${day} ${month} ${hours}:${minutes}`;
   };
 
   const isUrgent = showUrgent && seconds < 120; // < 2 minutes
@@ -307,6 +318,9 @@ export function TimeIndicator({
     >
       <Clock size={size === "sm" ? 12 : size === "md" ? 14 : 16} className={cn(isUrgent && "animate-pulse-fast")} />
       <span className="font-medium">{getTimeText()}</span>
+      {showExactDate && (
+        <span className="opacity-70">· {getExactDate()}</span>
+      )}
       {isUrgent && <Zap size={size === "sm" ? 10 : 12} className="text-yellow-500 animate-bounce-soft" />}
     </div>
   );
