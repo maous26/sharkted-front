@@ -117,7 +117,7 @@ export default function AdminPage() {
   const [vintedRescrapeLimit, setVintedRescrapeLimit] = useState(50);
 
   // Check authentication and authorization
-  const isAdmin = user?.plan === "PRO" || user?.plan === "AGENCY" || user?.plan === "pro" || user?.plan === "agency" || user?.email === "admin@sharkted.fr";
+  const isAdmin = user?.plan === "PRO" || user?.plan === "AGENCY" || user?.plan === "pro" || user?.plan === "agency" || user?.plan === "owner" || user?.plan === "OWNER" || user?.email === "admin@sharkted.fr";
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURN
   // Fetch system status from API
