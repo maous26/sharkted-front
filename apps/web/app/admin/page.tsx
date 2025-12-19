@@ -101,6 +101,12 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
   const [isRunningScrap, setIsRunningScrap] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [tierWebhooks, setTierWebhooks] = useState({
+    freemium: "",
+    basic: "",
+    premium: "",
+    admin: "",
+  });
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [scrapingMessage, setScrapingMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [editingSource, setEditingSource] = useState<ScrapingSource | null>(null);
@@ -115,6 +121,8 @@ export default function AdminPage() {
   const [isDeletingOldLogs, setIsDeletingOldLogs] = useState(false);
   const [isRescrapingVinted, setIsRescrapingVinted] = useState(false);
   const [vintedRescrapeLimit, setVintedRescrapeLimit] = useState(50);
+  const [isSavingWebhooks, setIsSavingWebhooks] = useState(false);
+  const [isTestingWebhook, setIsTestingWebhook] = useState<string | null>(null);
 
   // Check authentication and authorization
   const adminPlans = ["PRO", "AGENCY", "pro", "agency", "owner", "OWNER", "premium", "PREMIUM"];
@@ -280,6 +288,24 @@ export default function AdminPage() {
       router.push("/dashboard");
     }
   }, [isAuthenticated, isAdmin, hasHydrated, router]);
+
+  // Load Discord webhooks on mount
+  useEffect(() => {
+    if (isAuthenticated && isAdmin) {
+      adminApi.getDiscordWebhooks().then(({ data }) => {
+        if (data) {
+          setTierWebhooks({
+            freemium: data.freemium || "",
+            basic: data.basic || "",
+            premium: data.premium || "",
+            admin: data.admin || "",
+          });
+        }
+      }).catch(() => {
+        // Ignore errors - webhooks may not be configured yet
+      });
+    }
+  }, [isAuthenticated, isAdmin]);
 
   // Helper functions
   const handleLogout = () => {
@@ -452,6 +478,53 @@ export default function AdminPage() {
       setTimeout(() => setScrapingMessage(null), 5000);
     } finally {
       setIsRescrapingVinted(false);
+    }
+  };
+
+  const handleSaveWebhooks = async () => {
+    setIsSavingWebhooks(true);
+    try {
+      await adminApi.updateDiscordWebhooks(tierWebhooks);
+      setScrapingMessage({
+        type: "success",
+        text: "Webhooks Discord enregistres avec succes",
+      });
+      setTimeout(() => setScrapingMessage(null), 5000);
+    } catch (error) {
+      setScrapingMessage({
+        type: "error",
+        text: "Erreur lors de l'enregistrement des webhooks",
+      });
+      setTimeout(() => setScrapingMessage(null), 5000);
+    } finally {
+      setIsSavingWebhooks(false);
+    }
+  };
+
+  const handleTestWebhook = async (tier: string) => {
+    setIsTestingWebhook(tier);
+    try {
+      const { data } = await adminApi.testDiscordWebhook(tier);
+      if (data.status === "success") {
+        setScrapingMessage({
+          type: "success",
+          text: `Test ${tier.toUpperCase()} envoye avec succes!`,
+        });
+      } else {
+        setScrapingMessage({
+          type: "error",
+          text: `Erreur test ${tier}: ${data.error || "Echec"}`,
+        });
+      }
+      setTimeout(() => setScrapingMessage(null), 5000);
+    } catch (error) {
+      setScrapingMessage({
+        type: "error",
+        text: `Erreur lors du test du webhook ${tier}`,
+      });
+      setTimeout(() => setScrapingMessage(null), 5000);
+    } finally {
+      setIsTestingWebhook(null);
     }
   };
 
@@ -781,32 +854,126 @@ export default function AdminPage() {
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <Webhook size={18} className="text-purple-500" />
-                Config Discord
+                Config Discord par Tier
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-3 sm:space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Webhook Discord Global
-                </label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Les alertes seront envoyees sur ce canal Discord pour tous les utilisateurs
-                </p>
-                <Input
-                  placeholder="https://discord.com/api/webhooks/..."
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                />
+            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-4">
+              <p className="text-xs text-gray-500">
+                Configurez un webhook Discord different pour chaque niveau d&apos;abonnement. Les alertes seront envoyees au canal correspondant au tier de l&apos;utilisateur.
+              </p>
+
+              {/* Tier Webhooks */}
+              <div className="space-y-4">
+                {/* FREEMIUM */}
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded-full">
+                      FREEMIUM
+                    </span>
+                    <span className="text-xs text-gray-500">Gratuit - Sources limitees</span>
+                  </div>
+                  <Input
+                    placeholder="https://discord.com/api/webhooks/..."
+                    value={tierWebhooks.freemium}
+                    onChange={(e) => setTierWebhooks({ ...tierWebhooks, freemium: e.target.value })}
+                    className="text-sm"
+                  />
+                </div>
+
+                {/* BASIC */}
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">
+                      BASIC
+                    </span>
+                    <span className="text-xs text-gray-500">Toutes les sources FREE</span>
+                  </div>
+                  <Input
+                    placeholder="https://discord.com/api/webhooks/..."
+                    value={tierWebhooks.basic}
+                    onChange={(e) => setTierWebhooks({ ...tierWebhooks, basic: e.target.value })}
+                    className="text-sm"
+                  />
+                </div>
+
+                {/* PREMIUM */}
+                <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full">
+                      <Crown size={10} />
+                      PREMIUM
+                    </span>
+                    <span className="text-xs text-gray-500">Toutes les sources (FREE + PRO)</span>
+                  </div>
+                  <Input
+                    placeholder="https://discord.com/api/webhooks/..."
+                    value={tierWebhooks.premium}
+                    onChange={(e) => setTierWebhooks({ ...tierWebhooks, premium: e.target.value })}
+                    className="text-sm"
+                  />
+                </div>
+
+                {/* ADMIN */}
+                <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold bg-red-600 text-white rounded-full">
+                      <Shield size={10} />
+                      ADMIN
+                    </span>
+                    <span className="text-xs text-gray-500">Acces complet + Administration</span>
+                  </div>
+                  <Input
+                    placeholder="https://discord.com/api/webhooks/..."
+                    value={tierWebhooks.admin}
+                    onChange={(e) => setTierWebhooks({ ...tierWebhooks, admin: e.target.value })}
+                    className="text-sm"
+                  />
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button className="gap-2 text-sm" size="sm" disabled={!webhookUrl}>
-                  <Save size={14} />
-                  Enregistrer
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <Button
+                  className="gap-2 text-sm"
+                  size="sm"
+                  onClick={handleSaveWebhooks}
+                  disabled={isSavingWebhooks || (!tierWebhooks.freemium && !tierWebhooks.basic && !tierWebhooks.premium && !tierWebhooks.admin)}
+                >
+                  {isSavingWebhooks ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={14} />
+                      Enregistrer tous
+                    </>
+                  )}
                 </Button>
-                <Button variant="outline" className="gap-2 text-sm" size="sm" disabled={!webhookUrl}>
-                  <Globe size={14} />
-                  Tester
+                <Button
+                  variant="outline"
+                  className="gap-2 text-sm"
+                  size="sm"
+                  onClick={() => {
+                    // Test all configured webhooks
+                    const tiersToTest = Object.entries(tierWebhooks)
+                      .filter(([, url]) => url)
+                      .map(([tier]) => tier);
+                    tiersToTest.forEach((tier) => handleTestWebhook(tier));
+                  }}
+                  disabled={isTestingWebhook !== null || (!tierWebhooks.freemium && !tierWebhooks.basic && !tierWebhooks.premium && !tierWebhooks.admin)}
+                >
+                  {isTestingWebhook ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      Test en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Globe size={14} />
+                      Tester tous
+                    </>
+                  )}
                 </Button>
               </div>
 

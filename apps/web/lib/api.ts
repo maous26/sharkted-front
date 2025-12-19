@@ -243,6 +243,16 @@ export const adminApi = {
   scrapingFailures: () => api.get("/v1/admin/scraping/failures"),
   diagnoseSource: (source: string) => api.post(`/v1/admin/scraping/diagnose/${source}`),
   repairAllSources: () => api.post("/v1/admin/scraping/repair-all"),
+
+  // Discord Webhooks per tier
+  getDiscordWebhooks: () => api.get("/v1/admin/discord-webhooks"),
+  updateDiscordWebhooks: (data: {
+    freemium?: string;
+    basic?: string;
+    premium?: string;
+    admin?: string;
+  }) => api.put("/v1/admin/discord-webhooks", data),
+  testDiscordWebhook: (tier: string) => api.post(`/v1/admin/discord-webhooks/${tier}/test`),
 };
 
 
