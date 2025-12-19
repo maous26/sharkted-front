@@ -251,7 +251,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <CheckCircle size={18} className="text-primary-400 mt-0.5 shrink-0" />
-                  <span className="text-white">FlipScore Avancé</span>
+                  <span className="text-white">SharkScore Avancé</span>
                 </li>
               </ul>
               <Link href="/auth/register?plan=shark" className="block w-full py-4 text-center rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-bold transition shadow-lg transform group-hover:scale-[1.02]">

@@ -15,13 +15,18 @@ interface ScoreDistribution {
   percentage: number;
 }
 
-interface FlipScoreChartProps {
+interface SharkScoreChartProps {
   data: ScoreDistribution[];
 }
 
 const COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981"];
 
-export function FlipScoreChart({ data }: FlipScoreChartProps) {
+// Alias for backward compatibility
+export function FlipScoreChart({ data }: SharkScoreChartProps) {
+  return <SharkScoreChart data={data} />;
+}
+
+export function SharkScoreChart({ data }: SharkScoreChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-gray-400">

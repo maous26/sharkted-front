@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
           {/* Score Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Distribution des FlipScores</CardTitle>
+              <CardTitle>Distribution des SharkScores</CardTitle>
             </CardHeader>
             <CardContent>
               <FlipScoreChart data={scoreDistribution || []} />

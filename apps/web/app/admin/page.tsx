@@ -940,7 +940,7 @@ export default function AdminPage() {
                   <span className="font-medium">{systemSettings?.min_margin_percent || 20}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">FlipScore minimum</span>
+                  <span className="text-gray-500">SharkScore minimum</span>
                   <span className="font-medium">{systemSettings?.min_flip_score || 70}</span>
                 </div>
               </div>

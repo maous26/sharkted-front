@@ -180,12 +180,12 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
         {/* Bloc Scoring Simplifié - Toutes les infos importantes */}
         {hasScore && (
           <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-3 mb-4 border border-gray-100">
-            {/* FlipScore + Marge principale */}
+            {/* SharkScore + Marge principale */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <SharkScoreCircle score={deal.score!.flip_score} size="sm" showLabel={false} />
                 <div>
-                  <p className="text-xs text-gray-500">FlipScore</p>
+                  <p className="text-xs text-gray-500">SharkScore</p>
                   <p className="text-lg font-bold text-gray-900">{deal.score!.flip_score}</p>
                 </div>
               </div>
