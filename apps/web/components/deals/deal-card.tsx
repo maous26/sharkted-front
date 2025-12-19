@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, Eye, Zap, AlertTriangle, CheckCircle } from "lucide-react";
+import { ExternalLink, Eye, Zap, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -279,17 +279,6 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
               </div>
             )}
 
-            {/* Risques (si présents) */}
-            {deal.score?.risks && deal.score.risks.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-orange-200/50">
-                <div className="flex items-start gap-1.5">
-                  <AlertTriangle size={12} className="text-orange-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-[10px] text-orange-700 line-clamp-2">
-                    {deal.score.risks.slice(0, 2).join(" • ")}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
