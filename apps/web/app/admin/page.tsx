@@ -120,8 +120,10 @@ export default function AdminPage() {
   const adminPlans = ["PRO", "AGENCY", "pro", "agency", "owner", "OWNER", "premium", "PREMIUM"];
   const isAdmin = adminPlans.includes(user?.plan || "") || user?.email === "admin@sharkted.fr";
 
-  // Debug log
-  console.log("Admin check:", { user, plan: user?.plan, email: user?.email, isAdmin, isAuthenticated, hasHydrated });
+  // Debug log - visible in browser console
+  if (typeof window !== "undefined") {
+    console.log("🔧 ADMIN DEBUG:", { user, plan: user?.plan, email: user?.email, isAdmin, isAuthenticated, hasHydrated });
+  }
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURN
   // Fetch system status from API
@@ -266,7 +268,8 @@ export default function AdminPage() {
   };
 
   const handleRunScraping = (sourcesToRun?: string[]) => {
-    console.log("handleRunScraping called with:", sourcesToRun);
+    console.log("🚀 handleRunScraping called with:", sourcesToRun);
+    alert("Scraping lancé pour: " + (sourcesToRun?.join(", ") || "toutes les sources"));
     setScrapingMessage(null);
     setIsRunningScrap(true);
     runScrapingMutation.mutate(sourcesToRun);
