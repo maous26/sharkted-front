@@ -33,7 +33,8 @@ export interface VintedStats {
   margin_pct?: number;
   liquidity_score?: number;
   coefficient_variation?: number;
-  source_type?: "new" | "mixed" | "none";
+  source_type?: "vinted_real" | "new" | "mixed" | "none";  // vinted_real = neuf avec étiquette
+  condition?: "new_with_tags" | "new_without_tags" | "very_good" | "good";
   coefficient?: number;
   sample_listings?: number[] | Array<{
     title: string;

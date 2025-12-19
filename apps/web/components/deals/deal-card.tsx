@@ -190,15 +190,15 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
                 </div>
               </div>
               <div className="text-right">
-                {/* Badge source des données */}
+                {/* Badge source des données - VINTED seulement si données "neuf avec étiquette" */}
                 <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
                   Profit
-                  {deal.vinted_stats ? (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-700">
+                  {deal.vinted_stats?.source_type === "vinted_real" && deal.vinted_stats?.nb_listings > 0 ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-700" title="Prix réels Vinted (neuf avec étiquette)">
                       VINTED
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-500">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-500" title="Estimation algorithmique">
                       ESTIMÉ
                     </span>
                   )}
