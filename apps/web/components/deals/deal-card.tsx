@@ -189,11 +189,6 @@ export function DealCard({ deal, isNew = false }: DealCardProps) {
           <span className="text-2xl font-bold text-gray-900">
             {formatPrice(deal.sale_price)}
           </span>
-          {deal.original_price && deal.original_price > deal.sale_price && (
-            <span className="text-sm text-gray-400 line-through">
-              {formatPrice(deal.original_price)}
-            </span>
-          )}
           {deal.discount_pct && deal.discount_pct > 0 && (
             <span className="text-sm font-bold text-red-500">
               -{deal.discount_pct.toFixed(0)}%
