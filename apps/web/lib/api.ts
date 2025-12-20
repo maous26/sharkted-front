@@ -245,14 +245,14 @@ export const adminApi = {
   repairAllSources: () => api.post("/v1/admin/scraping/repair-all"),
 
   // Discord Webhooks per tier
-  getDiscordWebhooks: () => api.get("/v1/admin/discord-webhooks"),
+  getDiscordWebhooks: () => api.get("/v1/sources/discord-webhooks"),
   updateDiscordWebhooks: (data: {
     freemium?: string;
     basic?: string;
     premium?: string;
     admin?: string;
-  }) => api.put("/v1/admin/discord-webhooks", data),
-  testDiscordWebhook: (tier: string) => api.post(`/v1/admin/discord-webhooks/${tier}/test`),
+  }) => api.put("/v1/sources/discord-webhooks", data),
+  testDiscordWebhook: (tier: string) => api.post(`/v1/sources/discord-webhooks/${tier}/test`),
 };
 
 
