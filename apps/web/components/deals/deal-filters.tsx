@@ -11,7 +11,7 @@ interface DealFiltersProps {
 }
 
 const categories = [
-  { value: "", label: "Toutes categories" },
+  { value: "", label: "Toutes catégories" },
   { value: "sneakers", label: "Sneakers" },
   { value: "textile", label: "Textile" },
   { value: "accessoires", label: "Accessoires" },
@@ -19,7 +19,6 @@ const categories = [
 
 const brands = [
   { value: "", label: "Toutes marques" },
-  // Sneakers & Sport
   { value: "Nike", label: "Nike" },
   { value: "Adidas", label: "Adidas" },
   { value: "New Balance", label: "New Balance" },
@@ -27,30 +26,23 @@ const brands = [
   { value: "Puma", label: "Puma" },
   { value: "Asics", label: "Asics" },
   { value: "Reebok", label: "Reebok" },
-  // Streetwear & Premium
   { value: "Stone Island", label: "Stone Island" },
   { value: "CP Company", label: "CP Company" },
   { value: "The North Face", label: "The North Face" },
   { value: "Carhartt WIP", label: "Carhartt WIP" },
   { value: "Stussy", label: "Stussy" },
   { value: "Supreme", label: "Supreme" },
-  // Luxe Accessible
   { value: "Ralph Lauren", label: "Ralph Lauren" },
   { value: "Lacoste", label: "Lacoste" },
   { value: "Tommy Hilfiger", label: "Tommy Hilfiger" },
   { value: "Hugo Boss", label: "Hugo Boss" },
-  { value: "Calvin Klein", label: "Calvin Klein" },
-  // Outdoor & Heritage
   { value: "Arc'teryx", label: "Arc'teryx" },
   { value: "Patagonia", label: "Patagonia" },
   { value: "Moncler", label: "Moncler" },
-  { value: "Timberland", label: "Timberland" },
-  { value: "Levi's", label: "Levi's" },
 ];
 
 const sources = [
   { value: "", label: "Toutes sources" },
-  // Sneakers
   { value: "nike", label: "Nike" },
   { value: "adidas", label: "Adidas" },
   { value: "courir", label: "Courir" },
@@ -58,37 +50,29 @@ const sources = [
   { value: "snipes", label: "Snipes" },
   { value: "size", label: "Size?" },
   { value: "jdsports", label: "JD Sports" },
-  // Textile Premium
   { value: "kith", label: "Kith" },
   { value: "printemps", label: "Printemps" },
   { value: "laredoute", label: "La Redoute" },
-  // Multi-catégories
   { value: "zalando", label: "Zalando" },
-  { value: "end", label: "END." },
-  { value: "bstn", label: "BSTN" },
-  { value: "yoox", label: "YOOX" },
+  { value: "asos", label: "ASOS" },
 ];
 
+// NOUVEAU: Options de tri simplifiées (plus de score/marge)
 const sortOptions = [
-  { value: "detected_at", label: "Plus recents" },
-  { value: "flip_score", label: "Meilleur SharkScore" },
-  { value: "margin_pct", label: "Meilleure marge" },
-  { value: "sale_price_asc", label: "Prix croissant" },
-  { value: "sale_price_desc", label: "Prix decroissant" },
+  { value: "smart", label: "Pertinence" },
+  { value: "detected_at", label: "Plus récents" },
+  { value: "discount", label: "Meilleure décote" },
+  { value: "price_asc", label: "Prix croissant" },
+  { value: "price_desc", label: "Prix décroissant" },
 ];
 
-const marginPresets = [
+// NOUVEAU: Filtres par % de décote
+const discountPresets = [
   { value: 0, label: "Tout" },
   { value: 20, label: "> 20%" },
   { value: 30, label: "> 30%" },
   { value: 50, label: "> 50%" },
-];
-
-const scorePresets = [
-  { value: 0, label: "Tout" },
-  { value: 50, label: "> 50" },
-  { value: 70, label: "> 70" },
-  { value: 85, label: "> 85" },
+  { value: 70, label: "> 70%" },
 ];
 
 export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps) {
@@ -99,20 +83,17 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     brand: "",
     category: "",
     source: "",
-    min_score: 0,
-    min_margin: 0,
+    min_discount: 0,
     max_price: "",
-    sort_by: "detected_at",
+    sort_by: "smart",
   });
 
-  // Handle ESC key to close mobile drawer
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape" && isMobileDrawerOpen) {
       setIsMobileDrawerOpen(false);
     }
   }, [isMobileDrawerOpen]);
 
-  // Body scroll lock when mobile drawer is open
   useEffect(() => {
     if (isMobileDrawerOpen) {
       document.addEventListener("keydown", handleKeyDown);
@@ -124,7 +105,6 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     };
   }, [isMobileDrawerOpen, handleKeyDown]);
 
-  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery !== undefined) {
@@ -137,7 +117,7 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
   const applyFilters = (newFilters: typeof filters & { search?: string }) => {
     const apiFilters: Record<string, any> = {
       sort_by: newFilters.sort_by.includes("_asc") || newFilters.sort_by.includes("_desc")
-        ? newFilters.sort_by.replace(/_asc|_desc/, "")
+        ? "price"
         : newFilters.sort_by,
       sort_order: newFilters.sort_by.includes("_asc") ? "asc" : "desc",
     };
@@ -145,8 +125,7 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     if (newFilters.brand) apiFilters.brand = newFilters.brand;
     if (newFilters.category) apiFilters.category = newFilters.category;
     if (newFilters.source) apiFilters.source = newFilters.source;
-    if (newFilters.min_score) apiFilters.min_score = newFilters.min_score;
-    if (newFilters.min_margin) apiFilters.min_margin = newFilters.min_margin;
+    if (newFilters.min_discount) apiFilters.min_discount = newFilters.min_discount;
     if (newFilters.max_price) apiFilters.max_price = Number(newFilters.max_price);
     if (newFilters.search) apiFilters.search = newFilters.search;
 
@@ -164,10 +143,9 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
       brand: "",
       category: "",
       source: "",
-      min_score: 0,
-      min_margin: 0,
+      min_discount: 0,
       max_price: "",
-      sort_by: "detected_at",
+      sort_by: "smart",
     };
     setFilters(defaultFilters);
     setSearchQuery("");
@@ -178,13 +156,11 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
     filters.brand,
     filters.category,
     filters.source,
-    filters.min_score > 0,
-    filters.min_margin > 0,
+    filters.min_discount > 0,
     filters.max_price,
     searchQuery,
   ].filter(Boolean).length;
 
-  // Filter panel content (reused in desktop expand and mobile drawer)
   const filterPanelContent = (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -196,12 +172,10 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
           <select
             value={filters.brand}
             onChange={(e) => handleChange("brand", e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {brands.map((brand) => (
-              <option key={brand.value} value={brand.value}>
-                {brand.label}
-              </option>
+            {brands.map((b) => (
+              <option key={b.value} value={b.value}>{b.label}</option>
             ))}
           </select>
         </div>
@@ -209,17 +183,15 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
         {/* Category Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Categorie
+            Catégorie
           </label>
           <select
             value={filters.category}
             onChange={(e) => handleChange("category", e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {categories.map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
-              </option>
+            {categories.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
         </div>
@@ -232,313 +204,236 @@ export function DealFilters({ onFiltersChange, totalResults }: DealFiltersProps)
           <select
             value={filters.source}
             onChange={(e) => handleChange("source", e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {sources.map((source) => (
-              <option key={source.value} value={source.value}>
-                {source.label}
-              </option>
+            {sources.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
         </div>
 
-        {/* Min Score */}
+        {/* Sort */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            SharkScore minimum
+            Trier par
           </label>
-          <div className="flex gap-2">
-            {scorePresets.map((preset) => (
-              <button
-                key={preset.value}
-                onClick={() => handleChange("min_score", preset.value)}
-                className={cn(
-                  "flex-1 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors",
-                  filters.min_score === preset.value
-                    ? "bg-primary-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                )}
-              >
-                {preset.label}
-              </button>
+          <select
+            value={filters.sort_by}
+            onChange={(e) => handleChange("sort_by", e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {sortOptions.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
             ))}
-          </div>
-        </div>
-
-        {/* Min Margin */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Marge minimum
-          </label>
-          <div className="flex gap-2">
-            {marginPresets.map((preset) => (
-              <button
-                key={preset.value}
-                onClick={() => handleChange("min_margin", preset.value)}
-                className={cn(
-                  "flex-1 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors",
-                  filters.min_margin === preset.value
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                )}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
+          </select>
         </div>
       </div>
 
-      {/* Price Range */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Prix maximum
-        </label>
-        <div className="flex items-center gap-4">
-          <input
-            type="range"
-            min="0"
-            max="500"
-            step="10"
-            value={filters.max_price || 500}
-            onChange={(e) =>
-              handleChange("max_price", e.target.value === "500" ? "" : e.target.value)
-            }
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
-          />
-          <span className="text-sm font-medium text-gray-700 w-20 text-right">
-            {filters.max_price ? `${filters.max_price} EUR` : "Illimite"}
-          </span>
+      {/* Second row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Discount Presets */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Décote minimum
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {discountPresets.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => handleChange("min_discount", preset.value)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                  filters.min_discount === preset.value
+                    ? "bg-green-500 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                )}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Max Price */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Prix maximum
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              value={filters.max_price}
+              onChange={(e) => handleChange("max_price", e.target.value)}
+              placeholder="Ex: 150"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+          </div>
+        </div>
+
+        {/* Reset */}
+        <div className="flex items-end">
+          <Button
+            variant="outline"
+            onClick={resetFilters}
+            className="w-full"
+          >
+            <X size={16} className="mr-2" />
+            Réinitialiser
+          </Button>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="space-y-4">
-      {/* Main Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+    <div className="mb-6">
+      {/* Search Bar + Toggle */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search
-            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            size={18}
-          />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white text-gray-900 border border-gray-200 rounded-xl pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow"
+            placeholder="Rechercher un produit, une marque..."
+            className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X size={18} />
-            </button>
-          )}
         </div>
 
-        {/* Quick Filters Row */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 sm:flex-nowrap">
-          {/* Sort Dropdown */}
-          <div className="relative flex-shrink-0">
-            <select
-              value={filters.sort_by}
-              onChange={(e) => handleChange("sort_by", e.target.value)}
-              className="appearance-none bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 pr-8 sm:pr-10 text-xs sm:text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              size={16}
-            />
-          </div>
-
-          {/* More Filters Toggle - Opens drawer on mobile */}
-          <button
-            onClick={() => {
-              if (window.innerWidth < 640) {
-                setIsMobileDrawerOpen(true);
-              } else {
-                setIsExpanded(!isExpanded);
-              }
-            }}
+        {/* Filter Toggle Button */}
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (window.innerWidth < 768) {
+              setIsMobileDrawerOpen(true);
+            } else {
+              setIsExpanded(!isExpanded);
+            }
+          }}
+          className={cn(
+            "flex items-center gap-2 px-4 py-3 rounded-xl transition-all",
+            activeFiltersCount > 0 && "border-blue-500 bg-blue-50 text-blue-600"
+          )}
+        >
+          <SlidersHorizontal size={18} />
+          <span>Filtres</span>
+          {activeFiltersCount > 0 && (
+            <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              {activeFiltersCount}
+            </span>
+          )}
+          <ChevronDown
+            size={16}
             className={cn(
-              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex-shrink-0",
-              (isExpanded || isMobileDrawerOpen || activeFiltersCount > 0)
-                ? "bg-primary-500 border-primary-500 text-white"
-                : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+              "transition-transform hidden sm:block",
+              isExpanded && "rotate-180"
             )}
-            aria-expanded={isExpanded || isMobileDrawerOpen}
-          >
-            <SlidersHorizontal size={16} />
-            <span className="hidden sm:inline">Filtres</span>
-            {activeFiltersCount > 0 && (
-              <span className="bg-white/20 px-1.5 sm:px-2 py-0.5 rounded-full text-xs">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
+          />
+        </Button>
+      </div>
+
+      {/* Desktop Expanded Filters */}
+      <div
+        className={cn(
+          "hidden sm:block overflow-hidden transition-all duration-300",
+          isExpanded ? "max-h-96 opacity-100 mb-4" : "max-h-0 opacity-0"
+        )}
+      >
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          {filterPanelContent}
         </div>
       </div>
 
-      {/* Mobile Filter Drawer */}
+      {/* Mobile Drawer */}
       {isMobileDrawerOpen && (
-        <>
-          {/* Overlay */}
+        <div className="fixed inset-0 z-50 sm:hidden">
+          {/* Backdrop */}
           <div
-            className="sm:hidden fixed inset-0 bg-black/50 z-40"
+            className="absolute inset-0 bg-black/50"
             onClick={() => setIsMobileDrawerOpen(false)}
-            aria-hidden="true"
           />
+          
           {/* Drawer */}
-          <div
-            className="sm:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[85vh] overflow-y-auto"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Filtres"
-          >
-            {/* Drawer Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto animate-slide-up">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900">Filtres</h3>
               <button
                 onClick={() => setIsMobileDrawerOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-                aria-label="Fermer les filtres"
+                className="p-2 hover:bg-gray-100 rounded-full"
               >
                 <X size={20} />
               </button>
             </div>
-
-            {/* Drawer Content */}
-            <div className="p-4">
-              {filterPanelContent}
-            </div>
-
-            {/* Drawer Footer */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-3">
+            
+            {filterPanelContent}
+            
+            <div className="mt-6 pt-4 border-t">
               <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  resetFilters();
-                  setIsMobileDrawerOpen(false);
-                }}
-              >
-                Réinitialiser
-              </Button>
-              <Button
-                variant="primary"
-                className="flex-1"
                 onClick={() => setIsMobileDrawerOpen(false)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl"
               >
-                Appliquer
+                Voir {totalResults || 0} résultats
               </Button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
-      {/* Active Filters Chips */}
+      {/* Active Filters Summary */}
       {activeFiltersCount > 0 && (
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-          <span className="text-xs sm:text-sm text-gray-500 hidden sm:inline">Filtres actifs:</span>
-
+        <div className="flex flex-wrap gap-2 mt-3">
           {filters.brand && (
-            <FilterChip
-              label={filters.brand}
-              onRemove={() => handleChange("brand", "")}
-            />
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+              {filters.brand}
+              <button onClick={() => handleChange("brand", "")} className="hover:text-blue-900">
+                <X size={14} />
+              </button>
+            </span>
           )}
           {filters.category && (
-            <FilterChip
-              label={categories.find(c => c.value === filters.category)?.label || filters.category}
-              onRemove={() => handleChange("category", "")}
-            />
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+              {filters.category}
+              <button onClick={() => handleChange("category", "")} className="hover:text-purple-900">
+                <X size={14} />
+              </button>
+            </span>
           )}
           {filters.source && (
-            <FilterChip
-              label={sources.find(s => s.value === filters.source)?.label || filters.source}
-              onRemove={() => handleChange("source", "")}
-            />
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+              {filters.source}
+              <button onClick={() => handleChange("source", "")} className="hover:text-orange-900">
+                <X size={14} />
+              </button>
+            </span>
           )}
-          {filters.min_score > 0 && (
-            <FilterChip
-              label={`>${filters.min_score}`}
-              onRemove={() => handleChange("min_score", 0)}
-            />
-          )}
-          {filters.min_margin > 0 && (
-            <FilterChip
-              label={`>${filters.min_margin}%`}
-              onRemove={() => handleChange("min_margin", 0)}
-            />
+          {filters.min_discount > 0 && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+              Décote &gt; {filters.min_discount}%
+              <button onClick={() => handleChange("min_discount", 0)} className="hover:text-green-900">
+                <X size={14} />
+              </button>
+            </span>
           )}
           {filters.max_price && (
-            <FilterChip
-              label={`<${filters.max_price}€`}
-              onRemove={() => handleChange("max_price", "")}
-            />
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm">
+              Max {filters.max_price}€
+              <button onClick={() => handleChange("max_price", "")} className="hover:text-yellow-900">
+                <X size={14} />
+              </button>
+            </span>
           )}
           {searchQuery && (
-            <FilterChip
-              label={searchQuery.length > 10 ? searchQuery.slice(0, 10) + "..." : searchQuery}
-              onRemove={() => setSearchQuery("")}
-            />
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+              "{searchQuery}"
+              <button onClick={() => setSearchQuery("")} className="hover:text-gray-900">
+                <X size={14} />
+              </button>
+            </span>
           )}
-
-          <button
-            onClick={resetFilters}
-            className="text-xs sm:text-sm text-red-500 hover:text-red-600 font-medium ml-1 sm:ml-2"
-          >
-            Effacer
-          </button>
-        </div>
-      )}
-
-      {/* Desktop Expanded Filters Panel - Hidden on mobile */}
-      {isExpanded && (
-        <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
-          {filterPanelContent}
-        </div>
-      )}
-
-      {/* Results count */}
-      {totalResults !== undefined && (
-        <div className="text-sm text-gray-500">
-          {totalResults} resultats trouves
         </div>
       )}
     </div>
-  );
-}
-
-// Filter Chip Component
-function FilterChip({
-  label,
-  onRemove,
-}: {
-  label: string;
-  onRemove: () => void;
-}) {
-  return (
-    <span className="inline-flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-0.5 sm:py-1 bg-primary-100 text-primary-700 rounded-full text-xs sm:text-sm font-medium">
-      {label}
-      <button
-        onClick={onRemove}
-        className="hover:bg-primary-200 rounded-full p-0.5 transition-colors"
-        aria-label={`Supprimer le filtre ${label}`}
-      >
-        <X size={12} className="sm:w-3.5 sm:h-3.5" />
-      </button>
-    </span>
   );
 }
