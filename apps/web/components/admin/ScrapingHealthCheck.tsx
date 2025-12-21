@@ -211,11 +211,20 @@ export function ScrapingHealthCheck() {
       priceStats: priceBySource[source],
     }));
 
+  // Calculate summary based on actual display status
+  const getDisplayStatus = (source: SourceDetail) => {
+    if (source.status === "error") return "error";
+    if (source.status === "warning") return "warning";
+    if (source.status === "ok" && source.last_status === "partial") return "warning";
+    if (source.status === "ok") return "healthy";
+    return "warning"; // Default to warning for unknown states
+  };
+
   const summary = {
-    total: Object.keys(details).filter((s) => details[s].status !== "disabled").length,
-    healthy: healthData?.healthy_sources?.length || 0,
-    warning: sourcesList.filter((s) => s.last_status === "partial").length,
-    error: healthData?.sources_needing_repair?.length || 0,
+    total: sourcesList.length,
+    healthy: sourcesList.filter((s) => getDisplayStatus(s) === "healthy").length,
+    warning: sourcesList.filter((s) => getDisplayStatus(s) === "warning").length,
+    error: sourcesList.filter((s) => getDisplayStatus(s) === "error").length,
   };
 
   // Price health summary
@@ -366,14 +375,7 @@ export function ScrapingHealthCheck() {
         ) : (
           <div className="space-y-2">
             {sourcesList.map((source) => {
-              const displayStatus =
-                source.status === "ok"
-                  ? source.last_status === "partial"
-                    ? "warning"
-                    : "healthy"
-                  : source.status === "error"
-                  ? "error"
-                  : "warning";
+              const displayStatus = getDisplayStatus(source);
               const dealsCount = source.deals_found || source.deals_count || 0;
               const priceRate = source.priceStats?.success_rate;
 
