@@ -197,10 +197,11 @@ export function ScrapingHealthCheck() {
 
   // Merge health data with price stats
   const details = healthData?.details || {};
+  type PriceSource = PriceStats["sources"][0];
   const priceBySource = (priceStats?.sources || []).reduce((acc, s) => {
     acc[s.source] = s;
     return acc;
-  }, {} as Record<string, typeof priceStats.sources[0]>);
+  }, {} as Record<string, PriceSource>);
 
   const sourcesList = Object.entries(details)
     .filter(([, detail]) => detail.status !== "disabled")
