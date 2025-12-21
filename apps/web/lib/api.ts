@@ -253,6 +253,11 @@ export const adminApi = {
     admin?: string;
   }) => api.put("/v1/sources/discord-webhooks", data),
   testDiscordWebhook: (tier: string) => api.post(`/v1/sources/discord-webhooks/${tier}/test`),
+
+  // Price errors tracking & repair
+  getPriceErrors: () => api.get("/v1/admin/price-errors"),
+  repairPrices: (source?: string, limit?: number) =>
+    api.post("/v1/admin/repair-prices", { source, limit: limit || 30 }),
 };
 
 
